@@ -51,6 +51,5 @@ coverage.xml
 .DS_Store
 Thumbs.db
 
-# Local databases (user-added, not part of repo)
-# Keep sample_data.db but ignore user databases like chinook.db
-example/chinook.db
+# Local databases (generated or user-added)
+example/*.db
