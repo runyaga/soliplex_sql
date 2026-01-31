@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soliplex-sql"
+version = "0.1.0dev0"
+description = "Soliplex adapter for sql-toolset-pydantic-ai"
+authors = [{ name = "runyaga", email = "runyaga@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "sql-toolset-pydantic-ai @ git+https://github.com/vstorm-co/sql-toolset-pydantic-ai.git@dev",
+    "pydantic >= 2.0.0",
+    "pydantic-settings >= 2.0.0",
+    "pydantic-ai >= 0.1.0",
+]
+
+[project.optional-dependencies]
+soliplex = ["soliplex"]
+postgres = ["asyncpg >= 0.29.0"]
+
+[dependency-groups]
+dev = [
+    "pytest >= 8.0.0",
+    "pytest-cov >= 4.0.0",
+    "pytest-asyncio >= 0.23.0",
+    "coverage >= 7.0.0",
+    "ruff >= 0.4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+python_files = "test_*.py"
+testpaths = ["tests/unit"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "--cov=soliplex_sql --cov-branch --cov-fail-under=80"
+
+[tool.coverage.run]
+source = ["src/soliplex_sql"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "raise NotImplementedError",
+]
+
+[tool.ruff]
+line-length = 79
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "F",
+    "E",
+    "B",
+    "UP",
+    "I",
+    "TRY",
+    "PT",
+    "SIM",
+    "RUF",
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
