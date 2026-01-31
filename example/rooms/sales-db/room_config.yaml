@@ -3,9 +3,9 @@
 # This room is optimized for sales data analysis.
 # Uses the sample database with products, customers, orders.
 
-id: sales-db
-name: Sales Database
-description: Query the sales database for insights and analytics
+id: sales-db-readonly
+name: Sales Database (Read-Only)
+description: Query the sales database for insights and analytics (read-only)
 
 agent:
   model_name: gpt-oss:20b

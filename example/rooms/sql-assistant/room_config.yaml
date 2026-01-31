@@ -3,9 +3,9 @@
 # This room provides AI-assisted SQL database exploration and querying.
 # Uses sample_data.db with products, customers, orders, and order_items.
 
-id: sql-assistant
-name: SQL Database Assistant
-description: Query and explore your database with AI assistance
+id: sql-assistant-readonly
+name: SQL Database Assistant (Read-Only)
+description: Query and explore your database with AI assistance (read-only)
 
 agent:
   model_name: gpt-oss:20b

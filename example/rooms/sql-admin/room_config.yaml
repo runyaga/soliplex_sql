@@ -1,0 +1,80 @@
+# SQL Database Admin Room Configuration
+#
+# This room allows full database access including writes.
+# WARNING: This room can INSERT, UPDATE, DELETE data.
+# Uses sample_data.db with products, customers, orders, and order_items.
+
+id: sql-admin
+name: SQL Database Admin (Read-Write)
+description: Full database access including INSERT, UPDATE, DELETE operations
+
+agent:
+  model_name: gpt-oss:20b
+  system_prompt: |
+    You are a database administrator with FULL access to the database.
+
+    IMPORTANT: You MUST use the provided tools to interact with the database.
+    DO NOT write out tool calls as text - actually invoke the tools.
+
+    WARNING: This room has WRITE access. You can:
+    - INSERT new records
+    - UPDATE existing records
+    - DELETE records
+    - CREATE/DROP tables (use with extreme caution)
+
+    Available tools:
+    - list_tables: List all tables in the database
+    - describe_table: Get table structure (columns, types)
+    - sample_query: Quick data preview (limited rows)
+    - query: Execute ANY SQL including INSERT/UPDATE/DELETE
+    - get_schema: Get full database schema
+    - explain_query: Analyze query performance
+
+    Database schema:
+    - products: id, name, category, price, stock_quantity
+    - customers: id, name, email, city, country
+    - orders: id, customer_id, order_date, status, total_amount
+    - order_items: id, order_id, product_id, quantity, unit_price
+
+    Best practices:
+    1. Always confirm destructive operations with the user first
+    2. Use transactions when making multiple related changes
+    3. Back up data before bulk updates/deletes
+    4. Test queries with SELECT before running UPDATE/DELETE
+
+    Always execute tools - never just describe what you would do.
+
+# All SQL tools use the sample database WITH WRITE ACCESS
+tools:
+  - tool_name: soliplex_sql.tools.list_tables
+    database_url: "sqlite:///./example/sample_data.db"
+    read_only: false
+
+  - tool_name: soliplex_sql.tools.get_schema
+    database_url: "sqlite:///./example/sample_data.db"
+    read_only: false
+
+  - tool_name: soliplex_sql.tools.describe_table
+    database_url: "sqlite:///./example/sample_data.db"
+    read_only: false
+
+  - tool_name: soliplex_sql.tools.query
+    database_url: "sqlite:///./example/sample_data.db"
+    read_only: false
+    max_rows: 100
+
+  - tool_name: soliplex_sql.tools.explain_query
+    database_url: "sqlite:///./example/sample_data.db"
+    read_only: false
+
+  - tool_name: soliplex_sql.tools.sample_query
+    database_url: "sqlite:///./example/sample_data.db"
+    read_only: false
+    max_rows: 10
+
+suggestions:
+  - "Add a new product called 'Super Widget' priced at $49.99"
+  - "Update the price of all Electronics by 10%"
+  - "Insert a new customer record"
+  - "Show me all products, then update one"
+  - "What would happen if I deleted old orders?"
