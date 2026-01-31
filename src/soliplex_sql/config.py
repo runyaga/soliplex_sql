@@ -103,10 +103,9 @@ class SQLToolConfig(ToolConfig):
         default_factory=lambda: _get_env_settings().query_timeout
     )
 
-    @property
-    def kind(self) -> str:
-        """Return 'sql' as the config kind."""
-        return "sql"
+    # NOTE: Inherit 'kind' from ToolConfig base class to avoid registry
+    # collisions when multiple SQL tools are used in the same room.
+    # ToolConfig.kind derives unique identifier from tool_name.
 
     @classmethod
     def from_yaml(

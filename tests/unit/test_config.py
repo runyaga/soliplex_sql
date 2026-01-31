@@ -69,24 +69,24 @@ class TestSQLToolConfig:
         assert config.max_rows == 100
         assert config.query_timeout == 30.0
 
-    def test_kind_property_returns_sql(self) -> None:
-        """Kind property should always return 'sql'."""
+    def test_kind_property_derived_from_tool_name(self) -> None:
+        """Kind property should be derived from tool_name (last segment)."""
         config = SQLToolConfig(tool_name="soliplex_sql.tools.list_tables")
-        assert config.kind == "sql"
+        assert config.kind == "list_tables"
 
-    def test_kind_is_sql_regardless_of_tool_name(self) -> None:
-        """Kind should be 'sql' for all SQL tools."""
-        tools = [
-            "soliplex_sql.tools.list_tables",
-            "soliplex_sql.tools.get_schema",
-            "soliplex_sql.tools.describe_table",
-            "soliplex_sql.tools.query",
-            "soliplex_sql.tools.explain_query",
-            "soliplex_sql.tools.sample_query",
+    def test_kind_is_unique_per_tool(self) -> None:
+        """Each SQL tool should have a unique kind derived from tool_name."""
+        tools_and_kinds = [
+            ("soliplex_sql.tools.list_tables", "list_tables"),
+            ("soliplex_sql.tools.get_schema", "get_schema"),
+            ("soliplex_sql.tools.describe_table", "describe_table"),
+            ("soliplex_sql.tools.query", "query"),
+            ("soliplex_sql.tools.explain_query", "explain_query"),
+            ("soliplex_sql.tools.sample_query", "sample_query"),
         ]
-        for tool_name in tools:
+        for tool_name, expected_kind in tools_and_kinds:
             config = SQLToolConfig(tool_name=tool_name)
-            assert config.kind == "sql"
+            assert config.kind == expected_kind
 
     def test_from_yaml(self) -> None:
         """Should create from YAML config dict."""
