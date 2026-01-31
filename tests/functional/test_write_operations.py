@@ -9,11 +9,11 @@ does not call commit() after write operations, causing changes to be lost.
 
 from __future__ import annotations
 
+import contextlib
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import pytest
 import pytest_asyncio
 
 from soliplex_sql.adapter import SoliplexSQLAdapter
@@ -67,10 +67,8 @@ async def writable_db() -> SQLDatabaseDeps:
     await deps.database.close()
 
     # Cleanup temp file
-    try:
+    with contextlib.suppress(OSError):
         Path(db_path).unlink()
-    except OSError:
-        pass
 
 
 @pytest_asyncio.fixture
@@ -98,9 +96,11 @@ class TestInsertOperations:
     ) -> None:
         """INSERT should persist data that can be read back."""
         # Insert new record
-        await writable_adapter.query(
-            "INSERT INTO test_items (name, value) VALUES ('persisted_item', 999)"
+        sql = (
+            "INSERT INTO test_items (name, value) "
+            "VALUES ('persisted_item', 999)"
         )
+        await writable_adapter.query(sql)
 
         # Query should find the new record
         result = await writable_adapter.query(
@@ -182,9 +182,11 @@ class TestUpdateOperations:
         )
 
         # Verify updates
-        result = await writable_adapter.query(
-            "SELECT name, value FROM test_items WHERE name LIKE 'bulk_%' ORDER BY name"
+        sql = (
+            "SELECT name, value FROM test_items "
+            "WHERE name LIKE 'bulk_%' ORDER BY name"
         )
+        result = await writable_adapter.query(sql)
 
         assert result["row_count"] == 2
         assert result["rows"][0][1] == 100  # bulk_1: 10 * 10
@@ -220,8 +222,7 @@ class TestDeleteOperations:
         )
 
         assert result["rows"][0][0] == 0, (
-            "Expected 0 rows after DELETE. "
-            "DELETE may not have been committed."
+            "Expected 0 rows after DELETE. DELETE may not have been committed."
         )
 
     async def test_delete_with_condition(
@@ -237,9 +238,7 @@ class TestDeleteOperations:
         )
 
         # Delete only low-value items
-        await writable_adapter.query(
-            "DELETE FROM test_items WHERE value < 50"
-        )
+        await writable_adapter.query("DELETE FROM test_items WHERE value < 50")
 
         # Verify selective deletion
         result = await writable_adapter.query(
@@ -247,7 +246,9 @@ class TestDeleteOperations:
         )
 
         names = [row[0] for row in result["rows"]]
-        assert "delete_me" not in names, "Item that should be deleted still exists"
+        assert "delete_me" not in names, (
+            "Item that should be deleted still exists"
+        )
         assert "keep_me" in names, "Item that should be kept was deleted"
 
 
@@ -282,7 +283,7 @@ class TestTransactionBehavior:
 
         # Do some read operations
         await writable_adapter.query("SELECT * FROM test_items")
-        tables = await writable_adapter.list_tables()
+        await writable_adapter.list_tables()
         await writable_adapter.query("SELECT COUNT(*) FROM test_items")
 
         # Original insert should still be there
@@ -356,21 +357,16 @@ class TestWriteWithFreshConnection:
             await deps2.database.connect()
 
             # This should find the data if commits worked
-            result = await adapter2.query(
-                "SELECT data FROM persistence_test"
-            )
+            result = await adapter2.query("SELECT data FROM persistence_test")
 
             await deps2.database.close()
 
             assert result["row_count"] == 1, (
-                f"Expected 1 row from cross-adapter read, got {result['row_count']}. "
-                "Write operations are NOT being committed to disk. "
-                "The adapter's _commit_if_needed() may not be working."
+                f"Expected 1 row, got {result['row_count']}. "
+                "Write operations are NOT being committed to disk."
             )
             assert result["rows"][0][0] == "from_adapter_1"
 
         finally:
-            try:
+            with contextlib.suppress(OSError):
                 Path(db_path).unlink()
-            except OSError:
-                pass

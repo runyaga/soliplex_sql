@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
-from unittest.mock import patch
 
 import pytest
 
-from soliplex_sql.adapter import SoliplexSQLAdapter, _split_statements
+from soliplex_sql.adapter import SoliplexSQLAdapter
+from soliplex_sql.adapter import _split_statements
 from soliplex_sql.exceptions import QueryExecutionError
 
 
@@ -208,7 +208,10 @@ class TestStatementSplitting:
 
     def test_multiple_statements(self) -> None:
         """Multiple statements separated by semicolons."""
-        sql = "INSERT INTO users (name) VALUES ('a'); INSERT INTO users (name) VALUES ('b')"
+        sql = (
+            "INSERT INTO users (name) VALUES ('a'); "
+            "INSERT INTO users (name) VALUES ('b')"
+        )
         result = _split_statements(sql)
         assert result == [
             "INSERT INTO users (name) VALUES ('a')",
@@ -235,7 +238,9 @@ class TestStatementSplitting:
 
     def test_mixed_statements(self) -> None:
         """Mix of write and read statements."""
-        sql = "INSERT INTO t (x) VALUES (1); SELECT * FROM t; UPDATE t SET x = 2"
+        sql = (
+            "INSERT INTO t (x) VALUES (1); SELECT * FROM t; UPDATE t SET x = 2"
+        )
         result = _split_statements(sql)
         assert result == [
             "INSERT INTO t (x) VALUES (1)",
@@ -252,7 +257,7 @@ class TestStatementSplitting:
         assert _split_statements("   \n\t  ") == []
 
     def test_multiple_semicolons(self) -> None:
-        """Multiple consecutive semicolons should not create empty statements."""
+        """Consecutive semicolons should not create empty statements."""
         sql = "SELECT 1;; SELECT 2"
         result = _split_statements(sql)
         assert result == ["SELECT 1", "SELECT 2"]
@@ -330,9 +335,7 @@ class TestWriteCommit:
         mock_connection = AsyncMock()
         writable_deps.database._connection = mock_connection
         writable_deps.database.execute = AsyncMock(
-            return_value=MagicMock(
-                columns=[], rows=[], execution_time_ms=1.0
-            )
+            return_value=MagicMock(columns=[], rows=[], execution_time_ms=1.0)
         )
 
         adapter = SoliplexSQLAdapter(writable_deps)
@@ -347,9 +350,7 @@ class TestWriteCommit:
         mock_connection = AsyncMock()
         writable_deps.database._connection = mock_connection
         writable_deps.database.execute = AsyncMock(
-            return_value=MagicMock(
-                columns=[], rows=[], execution_time_ms=1.0
-            )
+            return_value=MagicMock(columns=[], rows=[], execution_time_ms=1.0)
         )
 
         adapter = SoliplexSQLAdapter(writable_deps)
@@ -364,9 +365,7 @@ class TestWriteCommit:
         mock_connection = AsyncMock()
         writable_deps.database._connection = mock_connection
         writable_deps.database.execute = AsyncMock(
-            return_value=MagicMock(
-                columns=[], rows=[], execution_time_ms=1.0
-            )
+            return_value=MagicMock(columns=[], rows=[], execution_time_ms=1.0)
         )
 
         adapter = SoliplexSQLAdapter(writable_deps)
@@ -374,9 +373,7 @@ class TestWriteCommit:
 
         mock_connection.commit.assert_called_once()
 
-    async def test_no_commit_on_select(
-        self, writable_deps: MagicMock
-    ) -> None:
+    async def test_no_commit_on_select(self, writable_deps: MagicMock) -> None:
         """SELECT should not trigger commit."""
         mock_connection = AsyncMock()
         writable_deps.database._connection = mock_connection
@@ -398,9 +395,7 @@ class TestWriteCommit:
         # Remove _connection attribute
         del writable_deps.database._connection
         writable_deps.database.execute = AsyncMock(
-            return_value=MagicMock(
-                columns=[], rows=[], execution_time_ms=1.0
-            )
+            return_value=MagicMock(columns=[], rows=[], execution_time_ms=1.0)
         )
 
         adapter = SoliplexSQLAdapter(writable_deps)
@@ -417,9 +412,7 @@ class TestWriteCommit:
         del mock_connection.commit
         writable_deps.database._connection = mock_connection
         writable_deps.database.execute = AsyncMock(
-            return_value=MagicMock(
-                columns=[], rows=[], execution_time_ms=1.0
-            )
+            return_value=MagicMock(columns=[], rows=[], execution_time_ms=1.0)
         )
 
         adapter = SoliplexSQLAdapter(writable_deps)

@@ -19,7 +19,9 @@ import httpx
 import pytest
 
 # Default to localhost, can be overridden with env var
-SERVER_URL = os.environ.get("SOLIPLEX_SQL_TEST_SERVER", "http://127.0.0.1:8000")
+SERVER_URL = os.environ.get(
+    "SOLIPLEX_SQL_TEST_SERVER", "http://127.0.0.1:8000"
+)
 
 
 @pytest.fixture
@@ -109,12 +111,16 @@ class TestRoomsConfiguration:
         # Check sql-assistant-readonly has suggestions
         sql_room = rooms.get("sql-assistant-readonly", {})
         suggestions = sql_room.get("suggestions", [])
-        assert len(suggestions) > 0, "sql-assistant-readonly should have suggestions"
+        assert len(suggestions) > 0, (
+            "sql-assistant-readonly should have suggestions"
+        )
 
         # Check sales-db-readonly has suggestions
         sales_room = rooms.get("sales-db-readonly", {})
         suggestions = sales_room.get("suggestions", [])
-        assert len(suggestions) > 0, "sales-db-readonly should have suggestions"
+        assert len(suggestions) > 0, (
+            "sales-db-readonly should have suggestions"
+        )
 
 
 class TestSQLToolBinding:

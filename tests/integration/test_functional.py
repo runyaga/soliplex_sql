@@ -22,7 +22,9 @@ from typing import Any
 import httpx
 import pytest
 
-SERVER_URL = os.environ.get("SOLIPLEX_SQL_TEST_SERVER", "http://127.0.0.1:8000")
+SERVER_URL = os.environ.get(
+    "SOLIPLEX_SQL_TEST_SERVER", "http://127.0.0.1:8000"
+)
 
 
 @pytest.fixture
@@ -105,7 +107,9 @@ class TestSQLToolExecution:
 
         Returns dict with thread_id and run_id.
         """
-        response = client.post("/api/v1/rooms/sql-assistant-readonly/agui", json={})
+        response = client.post(
+            "/api/v1/rooms/sql-assistant-readonly/agui", json={}
+        )
         assert response.status_code in (200, 201), (
             f"Failed to create thread: {response.text}"
         )
@@ -285,7 +289,7 @@ class TestSQLToolExecution:
 
 
 class TestSalesDBRoom:
-    """Tests specific to the sales-db-readonly room with per-tool config overrides."""
+    """Tests for the sales-db-readonly room with per-tool config."""
 
     @pytest.fixture
     def sales_thread(self, client: httpx.Client) -> dict[str, str]:
@@ -377,8 +381,11 @@ class TestSalesDBRoom:
         # 2. Mentioned SQL/query in text (some LLMs output tool syntax)
         tool_names = get_tool_names(events)
         sql_tools = [
-            "query", "list_tables", "describe_table",
-            "get_schema", "sample_query",
+            "query",
+            "list_tables",
+            "describe_table",
+            "get_schema",
+            "sample_query",
         ]
         has_sql_tool = any(
             any(sql in name for sql in sql_tools) for name in tool_names
@@ -402,7 +409,9 @@ class TestErrorHandling:
     @pytest.fixture
     def thread(self, client: httpx.Client) -> dict[str, str]:
         """Create a thread for error testing."""
-        response = client.post("/api/v1/rooms/sql-assistant-readonly/agui", json={})
+        response = client.post(
+            "/api/v1/rooms/sql-assistant-readonly/agui", json={}
+        )
         assert response.status_code in (200, 201)
         data = response.json()
         thread_id = data["thread_id"]

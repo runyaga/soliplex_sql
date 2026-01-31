@@ -10,8 +10,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
-import re
-
 from soliplex_sql.exceptions import QueryExecutionError
 
 if TYPE_CHECKING:
@@ -255,7 +253,7 @@ class SoliplexSQLAdapter:
             return
 
         # Access internal connection to commit
-        # Works with SQLiteDatabase (aiosqlite) and PostgreSQLDatabase (asyncpg)
+        # Works with SQLiteDatabase (aiosqlite) and PostgreSQLDatabase
         database = self._sql_deps.database
         connection = getattr(database, "_connection", None)
 
@@ -323,7 +321,7 @@ class SoliplexSQLAdapter:
 
         # Commit if any statement was a write
         if had_write:
-            await self._commit_if_needed(statements[0])  # Just need one write query
+            await self._commit_if_needed(statements[0])
 
         limit = max_rows or self._sql_deps.max_rows
         rows = all_rows[:limit]
