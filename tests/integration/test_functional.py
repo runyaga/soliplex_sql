@@ -105,7 +105,7 @@ class TestSQLToolExecution:
 
         Returns dict with thread_id and run_id.
         """
-        response = client.post("/api/v1/rooms/sql-assistant/agui", json={})
+        response = client.post("/api/v1/rooms/sql-assistant-readonly/agui", json={})
         assert response.status_code in (200, 201), (
             f"Failed to create thread: {response.text}"
         )
@@ -118,11 +118,11 @@ class TestSQLToolExecution:
 
     @pytest.fixture
     def sales_db_thread(self, client: httpx.Client) -> dict[str, str]:
-        """Create a new thread in the sales-db room.
+        """Create a new thread in the sales-db-readonly room.
 
         Returns dict with thread_id and run_id.
         """
-        response = client.post("/api/v1/rooms/sales-db/agui", json={})
+        response = client.post("/api/v1/rooms/sales-db-readonly/agui", json={})
         assert response.status_code in (200, 201), (
             f"Failed to create thread: {response.text}"
         )
@@ -183,7 +183,7 @@ class TestSQLToolExecution:
         """
         events = self._send_message(
             client,
-            "sql-assistant",
+            "sql-assistant-readonly",
             sql_assistant_thread["thread_id"],
             sql_assistant_thread["run_id"],
             "Hello, are you there?",
@@ -205,7 +205,7 @@ class TestSQLToolExecution:
         """
         events = self._send_message(
             client,
-            "sql-assistant",
+            "sql-assistant-readonly",
             sql_assistant_thread["thread_id"],
             sql_assistant_thread["run_id"],
             "What tables are in the database? Use the list_tables tool.",
@@ -236,7 +236,7 @@ class TestSQLToolExecution:
         """
         events = self._send_message(
             client,
-            "sql-assistant",
+            "sql-assistant-readonly",
             sql_assistant_thread["thread_id"],
             sql_assistant_thread["run_id"],
             "Execute this SQL query: SELECT 1 + 1 AS result",
@@ -270,7 +270,7 @@ class TestSQLToolExecution:
         """
         events = self._send_message(
             client,
-            "sql-assistant",
+            "sql-assistant-readonly",
             sql_assistant_thread["thread_id"],
             sql_assistant_thread["run_id"],
             "First list the tables, then describe the first table you find.",
@@ -285,12 +285,12 @@ class TestSQLToolExecution:
 
 
 class TestSalesDBRoom:
-    """Tests specific to the sales-db room with per-tool config overrides."""
+    """Tests specific to the sales-db-readonly room with per-tool config overrides."""
 
     @pytest.fixture
     def sales_thread(self, client: httpx.Client) -> dict[str, str]:
-        """Create a new thread in the sales-db room."""
-        response = client.post("/api/v1/rooms/sales-db/agui", json={})
+        """Create a new thread in the sales-db-readonly room."""
+        response = client.post("/api/v1/rooms/sales-db-readonly/agui", json={})
         assert response.status_code in (200, 201)
         data = response.json()
         thread_id = data["thread_id"]
@@ -306,8 +306,8 @@ class TestSalesDBRoom:
         run_id: str,
         message: str,
     ) -> list[dict[str, Any]]:
-        """Send message to sales-db room."""
-        url = f"/api/v1/rooms/sales-db/agui/{thread_id}/{run_id}"
+        """Send message to sales-db-readonly room."""
+        url = f"/api/v1/rooms/sales-db-readonly/agui/{thread_id}/{run_id}"
         payload = {
             "threadId": thread_id,
             "runId": run_id,
@@ -336,7 +336,7 @@ class TestSalesDBRoom:
     def test_sales_room_responds(
         self, client: httpx.Client, sales_thread: dict[str, str]
     ) -> None:
-        """Verify the sales-db room agent responds."""
+        """Verify the sales-db-readonly room agent responds."""
         events = self._send_message(
             client,
             sales_thread["thread_id"],
@@ -351,7 +351,7 @@ class TestSalesDBRoom:
     def test_sales_room_sql_execution(
         self, client: httpx.Client, sales_thread: dict[str, str]
     ) -> None:
-        """Verify SQL execution works in sales-db room.
+        """Verify SQL execution works in sales-db-readonly room.
 
         Uses in-memory SQLite which may be empty. The test verifies:
         1. Agent attempts to use SQL tools OR mentions SQL in response
@@ -402,7 +402,7 @@ class TestErrorHandling:
     @pytest.fixture
     def thread(self, client: httpx.Client) -> dict[str, str]:
         """Create a thread for error testing."""
-        response = client.post("/api/v1/rooms/sql-assistant/agui", json={})
+        response = client.post("/api/v1/rooms/sql-assistant-readonly/agui", json={})
         assert response.status_code in (200, 201)
         data = response.json()
         thread_id = data["thread_id"]
@@ -418,7 +418,7 @@ class TestErrorHandling:
         message: str,
     ) -> list[dict[str, Any]]:
         """Send message to sql-assistant room."""
-        url = f"/api/v1/rooms/sql-assistant/agui/{thread_id}/{run_id}"
+        url = f"/api/v1/rooms/sql-assistant-readonly/agui/{thread_id}/{run_id}"
         payload = {
             "threadId": thread_id,
             "runId": run_id,

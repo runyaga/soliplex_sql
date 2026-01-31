@@ -10,10 +10,69 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 
+import re
+
 from soliplex_sql.exceptions import QueryExecutionError
 
 if TYPE_CHECKING:
     from sql_toolset_pydantic_ai import SQLDatabaseDeps
+
+
+def _split_statements(sql: str) -> list[str]:
+    """Split SQL into individual statements.
+
+    Handles semicolons inside string literals by using a simple state machine.
+    This allows multi-statement queries like "INSERT...; INSERT...;" to work
+    with SQLite which only allows one statement per execute().
+
+    Args:
+        sql: SQL string potentially containing multiple statements
+
+    Returns:
+        List of individual SQL statements (empty strings filtered out)
+    """
+    statements = []
+    current = []
+    in_string = False
+    string_char = None
+    i = 0
+
+    while i < len(sql):
+        char = sql[i]
+
+        # Handle string literals
+        if char in ("'", '"') and not in_string:
+            in_string = True
+            string_char = char
+            current.append(char)
+        elif char == string_char and in_string:
+            # Check for escaped quote (doubled)
+            if i + 1 < len(sql) and sql[i + 1] == string_char:
+                current.append(char)
+                current.append(sql[i + 1])
+                i += 1
+            else:
+                in_string = False
+                string_char = None
+                current.append(char)
+        elif char == ";" and not in_string:
+            # End of statement
+            stmt = "".join(current).strip()
+            if stmt:
+                statements.append(stmt)
+            current = []
+        else:
+            current.append(char)
+
+        i += 1
+
+    # Don't forget the last statement (may not end with semicolon)
+    stmt = "".join(current).strip()
+    if stmt:
+        statements.append(stmt)
+
+    return statements
+
 
 # SQL statements allowed in read-only mode
 # WITH is included for Common Table Expressions (CTEs)
@@ -24,6 +83,18 @@ _READONLY_PREFIXES = (
     "SHOW",
     "DESCRIBE",
     "WITH",
+)
+
+# Write operations that require commit
+_WRITE_PREFIXES = (
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "CREATE",
+    "DROP",
+    "ALTER",
+    "REPLACE",
+    "TRUNCATE",
 )
 
 
@@ -158,6 +229,43 @@ class SoliplexSQLAdapter:
             msg += "Only SELECT, EXPLAIN, PRAGMA, SHOW, DESCRIBE allowed."
             raise QueryExecutionError(msg)
 
+    def _is_write_query(self, sql_query: str) -> bool:
+        """Check if query modifies the database.
+
+        Args:
+            sql_query: SQL query to check
+
+        Returns:
+            True if query is a write operation
+        """
+        normalized = sql_query.strip().upper()
+        return normalized.startswith(_WRITE_PREFIXES)
+
+    async def _commit_if_needed(self, sql_query: str) -> None:
+        """Commit transaction if query was a write operation.
+
+        The upstream sql-toolset-pydantic-ai library doesn't commit after
+        write operations, causing changes to be lost. This method works
+        around that by accessing the internal connection.
+
+        Args:
+            sql_query: SQL query that was executed
+        """
+        if not self._is_write_query(sql_query):
+            return
+
+        # Access internal connection to commit
+        # Works with SQLiteDatabase (aiosqlite) and PostgreSQLDatabase (asyncpg)
+        database = self._sql_deps.database
+        connection = getattr(database, "_connection", None)
+
+        if connection is None:
+            return
+
+        # aiosqlite connection has commit()
+        if hasattr(connection, "commit"):
+            await connection.commit()
+
     async def query(
         self,
         sql_query: str,
@@ -165,8 +273,12 @@ class SoliplexSQLAdapter:
     ) -> dict[str, Any]:
         """Execute a SQL query and return results.
 
+        Supports multiple statements separated by semicolons.
+        Each statement is executed separately (SQLite requirement).
+        Returns combined results from all statements.
+
         Args:
-            sql_query: SQL query to execute
+            sql_query: SQL query to execute (may contain multiple statements)
             max_rows: Maximum rows to return
 
         Returns:
@@ -175,21 +287,54 @@ class SoliplexSQLAdapter:
         Raises:
             QueryExecutionError: If mutation attempted in read-only mode
         """
-        # Enforce read-only mode
-        self._check_read_only(sql_query)
+        # Split into individual statements
+        statements = _split_statements(sql_query)
 
-        result = await self._sql_deps.database.execute(sql_query)
+        if not statements:
+            return {
+                "columns": [],
+                "rows": [],
+                "row_count": 0,
+                "truncated": False,
+                "execution_time_ms": 0.0,
+            }
+
+        # Execute each statement
+        all_columns: list[str] = []
+        all_rows: list[list[Any]] = []
+        total_time = 0.0
+        had_write = False
+
+        for stmt in statements:
+            # Enforce read-only mode for each statement
+            self._check_read_only(stmt)
+
+            result = await self._sql_deps.database.execute(stmt)
+            total_time += result.execution_time_ms
+
+            # Track if any statement was a write
+            if self._is_write_query(stmt):
+                had_write = True
+
+            # Collect results (use columns from last SELECT-like statement)
+            if result.columns:
+                all_columns = result.columns
+                all_rows.extend([list(row) for row in result.rows])
+
+        # Commit if any statement was a write
+        if had_write:
+            await self._commit_if_needed(statements[0])  # Just need one write query
 
         limit = max_rows or self._sql_deps.max_rows
-        rows = result.rows[:limit]
-        truncated = len(result.rows) > limit
+        rows = all_rows[:limit]
+        truncated = len(all_rows) > limit
 
         return {
-            "columns": result.columns,
-            "rows": [list(row) for row in rows],
+            "columns": all_columns,
+            "rows": rows,
             "row_count": len(rows),
             "truncated": truncated,
-            "execution_time_ms": result.execution_time_ms,
+            "execution_time_ms": total_time,
         }
 
     async def explain_query(self, sql_query: str) -> str:

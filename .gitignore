@@ -50,3 +50,7 @@ coverage.xml
 # OS
 .DS_Store
 Thumbs.db
+
+# Local databases (not part of repo)
+example/chinook.db
+example/rooms/chinook-admin/

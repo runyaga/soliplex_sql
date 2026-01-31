@@ -59,25 +59,25 @@ class TestRoomsConfiguration:
         assert len(rooms) >= 2  # At least sql-assistant and sales-db
 
     def test_sql_assistant_room_exists(self, client: httpx.Client) -> None:
-        """sql-assistant room should be available."""
+        """sql-assistant-readonly room should be available."""
         response = client.get("/api/v1/rooms")
         assert response.status_code == 200
         rooms = response.json()
-        assert "sql-assistant" in rooms
+        assert "sql-assistant-readonly" in rooms
 
     def test_sales_db_room_exists(self, client: httpx.Client) -> None:
-        """sales-db room should be available."""
+        """sales-db-readonly room should be available."""
         response = client.get("/api/v1/rooms")
         assert response.status_code == 200
         rooms = response.json()
-        assert "sales-db" in rooms
+        assert "sales-db-readonly" in rooms
 
     def test_room_has_agent_config(self, client: httpx.Client) -> None:
         """Rooms should have agent configuration."""
         response = client.get("/api/v1/rooms")
         assert response.status_code == 200
         rooms = response.json()
-        sql_room = rooms.get("sql-assistant", {})
+        sql_room = rooms.get("sql-assistant-readonly", {})
         assert "agent" in sql_room
         assert "model_name" in sql_room["agent"]
 
@@ -86,16 +86,17 @@ class TestRoomsConfiguration:
         response = client.get("/api/v1/rooms")
         assert response.status_code == 200
         rooms = response.json()
-        sql_room = rooms.get("sql-assistant", {})
+        sql_room = rooms.get("sql-assistant-readonly", {})
         model = sql_room.get("agent", {}).get("model_name", "")
-        assert "qwen3-coder" in model
+        # Model can be gpt-oss:20b or other configured model
+        assert len(model) > 0, "Room should have a model configured"
 
     def test_sales_db_room_has_description(self, client: httpx.Client) -> None:
-        """sales-db room should have proper description."""
+        """sales-db-readonly room should have proper description."""
         response = client.get("/api/v1/rooms")
         assert response.status_code == 200
         rooms = response.json()
-        sales_room = rooms.get("sales-db", {})
+        sales_room = rooms.get("sales-db-readonly", {})
         assert "description" in sales_room
         assert "sales" in sales_room["description"].lower()
 
@@ -105,27 +106,27 @@ class TestRoomsConfiguration:
         assert response.status_code == 200
         rooms = response.json()
 
-        # Check sql-assistant has suggestions
-        sql_room = rooms.get("sql-assistant", {})
+        # Check sql-assistant-readonly has suggestions
+        sql_room = rooms.get("sql-assistant-readonly", {})
         suggestions = sql_room.get("suggestions", [])
-        assert len(suggestions) > 0, "sql-assistant should have suggestions"
+        assert len(suggestions) > 0, "sql-assistant-readonly should have suggestions"
 
-        # Check sales-db has suggestions
-        sales_room = rooms.get("sales-db", {})
+        # Check sales-db-readonly has suggestions
+        sales_room = rooms.get("sales-db-readonly", {})
         suggestions = sales_room.get("suggestions", [])
-        assert len(suggestions) > 0, "sales-db should have suggestions"
+        assert len(suggestions) > 0, "sales-db-readonly should have suggestions"
 
 
 class TestSQLToolBinding:
     """Verify SQL tools are correctly bound to rooms."""
 
     def test_sql_assistant_has_tools(self, client: httpx.Client) -> None:
-        """sql-assistant room should have SQL tools configured."""
+        """sql-assistant-readonly room should have SQL tools configured."""
         response = client.get("/api/v1/rooms")
         assert response.status_code == 200
         rooms = response.json()
 
-        sql_room = rooms.get("sql-assistant", {})
+        sql_room = rooms.get("sql-assistant-readonly", {})
         # Tools may be under 'tools' or 'tool_configs' depending on API
         tools = sql_room.get("tools", sql_room.get("tool_configs", []))
 
@@ -133,12 +134,12 @@ class TestSQLToolBinding:
         assert tools is not None, "Room should have tools field"
 
     def test_sales_db_has_tools(self, client: httpx.Client) -> None:
-        """sales-db room should have SQL tools configured."""
+        """sales-db-readonly room should have SQL tools configured."""
         response = client.get("/api/v1/rooms")
         assert response.status_code == 200
         rooms = response.json()
 
-        sales_room = rooms.get("sales-db", {})
+        sales_room = rooms.get("sales-db-readonly", {})
         tools = sales_room.get("tools", sales_room.get("tool_configs", []))
 
         assert tools is not None, "Room should have tools field"
@@ -149,7 +150,7 @@ class TestSQLToolBinding:
         assert response.status_code == 200
         rooms = response.json()
 
-        sql_room = rooms.get("sql-assistant", {})
+        sql_room = rooms.get("sql-assistant-readonly", {})
         tools = sql_room.get("tools", sql_room.get("tool_configs", []))
 
         if isinstance(tools, list) and len(tools) > 0:
@@ -172,7 +173,7 @@ class TestSQLToolBinding:
         assert response.status_code == 200
         rooms = response.json()
 
-        sql_room = rooms.get("sql-assistant", {})
+        sql_room = rooms.get("sql-assistant-readonly", {})
         tools = sql_room.get("tools", sql_room.get("tool_configs", []))
 
         if isinstance(tools, list) and len(tools) > 0:
@@ -192,15 +193,15 @@ class TestAGUIEndpoints:
 
     def test_get_room_agui(self, client: httpx.Client) -> None:
         """Should get room AGUI info with threads list."""
-        response = client.get("/api/v1/rooms/sql-assistant/agui")
+        response = client.get("/api/v1/rooms/sql-assistant-readonly/agui")
         assert response.status_code == 200
         data = response.json()
         # AGUI endpoint returns threads list
         assert "threads" in data
 
     def test_get_sales_db_agui(self, client: httpx.Client) -> None:
-        """Should get sales-db room AGUI info."""
-        response = client.get("/api/v1/rooms/sales-db/agui")
+        """Should get sales-db-readonly room AGUI info."""
+        response = client.get("/api/v1/rooms/sales-db-readonly/agui")
         assert response.status_code == 200
         data = response.json()
         assert "threads" in data
@@ -208,7 +209,7 @@ class TestAGUIEndpoints:
     def test_create_thread_returns_id(self, client: httpx.Client) -> None:
         """Creating a thread should return thread info."""
         response = client.post(
-            "/api/v1/rooms/sql-assistant/agui",
+            "/api/v1/rooms/sql-assistant-readonly/agui",
             json={},
         )
         # Accept various success codes
