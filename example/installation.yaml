@@ -6,9 +6,14 @@
 id: "soliplex-sql-example"
 
 meta:
-  # Register SQL tool config class (single class for all SQL tools)
+  # Register SQL tool config classes (one per tool for Soliplex registry)
   tool_configs:
-    - soliplex_sql.config.SQLToolConfig
+    - soliplex_sql.config.ListTablesConfig
+    - soliplex_sql.config.GetSchemaConfig
+    - soliplex_sql.config.DescribeTableConfig
+    - soliplex_sql.config.QueryConfig
+    - soliplex_sql.config.ExplainQueryConfig
+    - soliplex_sql.config.SampleQueryConfig
 
 secrets:
   - secret_name: "URL_SAFE_TOKEN_SECRET"

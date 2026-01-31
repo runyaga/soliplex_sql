@@ -142,3 +142,50 @@ class SQLToolConfig(ToolConfig):
             max_rows=self.max_rows,
             query_timeout=self.query_timeout,
         )
+
+
+# Per-tool config classes for Soliplex registration.
+# Soliplex requires class-level tool_name for TOOL_CONFIG_CLASSES_BY_TOOL_NAME
+# registry. These subclasses inherit all logic from SQLToolConfig.
+
+
+@dataclasses.dataclass
+class ListTablesConfig(SQLToolConfig):
+    """Config for list_tables tool."""
+
+    tool_name: str = "soliplex_sql.tools.list_tables"
+
+
+@dataclasses.dataclass
+class GetSchemaConfig(SQLToolConfig):
+    """Config for get_schema tool."""
+
+    tool_name: str = "soliplex_sql.tools.get_schema"
+
+
+@dataclasses.dataclass
+class DescribeTableConfig(SQLToolConfig):
+    """Config for describe_table tool."""
+
+    tool_name: str = "soliplex_sql.tools.describe_table"
+
+
+@dataclasses.dataclass
+class QueryConfig(SQLToolConfig):
+    """Config for query tool."""
+
+    tool_name: str = "soliplex_sql.tools.query"
+
+
+@dataclasses.dataclass
+class ExplainQueryConfig(SQLToolConfig):
+    """Config for explain_query tool."""
+
+    tool_name: str = "soliplex_sql.tools.explain_query"
+
+
+@dataclasses.dataclass
+class SampleQueryConfig(SQLToolConfig):
+    """Config for sample_query tool."""
+
+    tool_name: str = "soliplex_sql.tools.sample_query"
