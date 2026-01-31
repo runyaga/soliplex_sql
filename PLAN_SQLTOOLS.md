@@ -153,7 +153,7 @@ Report findings in this format:
 - [x] Update README with room usage examples
 - [x] **LLM Review: Source** - Gemini pro3 `read_files` (see FEEDBACK_SQLTOOLS.md)
 - [x] Incorporate feedback fixes (D1-D4: docs + SQLToolConfig alias)
-- [x] Commit Phase 3
+- [x] Commit Phase 3 (`91ec63c`)
 
 ### Phase 4: Polish & Release ⏳
 - [ ] Complete README.md documentation
