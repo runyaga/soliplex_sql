@@ -6,6 +6,87 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 
 ---
 
+## LLM Review Process
+
+**IMPORTANT**: When running LLM reviews at phase gates, you MUST:
+
+1. **Use `mcp__gemini__read_files`** (NOT `ask_gemini`)
+2. **Use model `gemini-3-pro-preview`**
+3. **Include `PLAN_SQLTOOLS.md`** so Gemini sees the phase objectives
+4. **Include ALL source files touched in the phase**
+
+### Required Tool Call Format
+
+```python
+mcp__gemini__read_files(
+    file_paths=[
+        "/Users/runyaga/dev/soliplex_sql/PLAN_SQLTOOLS.md",  # ALWAYS include
+        # ... all source files modified in this phase
+        # ... all test files modified in this phase
+    ],
+    prompt="<phase context and review instructions>",
+    model="gemini-3-pro-preview"  # ALWAYS use pro3 for reviews
+)
+```
+
+### Review Prompt Template
+
+```
+This is Phase X.Y of soliplex_sql development: [Phase Title]
+
+Refer to PLAN_SQLTOOLS.md for phase objectives (included in file_paths).
+
+Completed tasks this phase:
+- [List what was done]
+
+Please review for:
+1. Any issues related to the phase objectives
+2. Code quality issues
+3. Security concerns
+4. Thread-safety issues
+5. Missing functionality or regressions
+
+Report findings in this format:
+| ID | File:Line | Issue | Severity |
+```
+
+### Example (Phase 2.5)
+
+```python
+mcp__gemini__read_files(
+    file_paths=[
+        "/Users/runyaga/dev/soliplex_sql/PLAN_SQLTOOLS.md",
+        "/Users/runyaga/dev/soliplex_sql/src/soliplex_sql/adapter.py",
+        "/Users/runyaga/dev/soliplex_sql/src/soliplex_sql/tools.py",
+        "/Users/runyaga/dev/soliplex_sql/tests/unit/test_adapter.py",
+        "/Users/runyaga/dev/soliplex_sql/tests/unit/test_tools.py",
+    ],
+    prompt="""This is Phase 2.5 of soliplex_sql development: Remove AG-UI Event Emission.
+
+Refer to PLAN_SQLTOOLS.md for phase objectives.
+
+Completed tasks:
+- Removed _create_task_status_patch() from adapter.py
+- Removed _emit_task_progress() from adapter.py
+- Removed agui_emitter and related_task_id parameters from all methods
+- Removed _get_agui_emitter() from tools.py
+- Updated tests to remove AG-UI mocks/fixtures
+
+Please review for:
+1. Any remaining AG-UI references that were missed
+2. Code quality issues
+3. Security concerns (especially read_only enforcement)
+4. Thread-safety issues with the adapter cache
+5. Any missing functionality or regressions
+
+Report findings in this format:
+| ID | File:Line | Issue | Severity |""",
+    model="gemini-3-pro-preview"
+)
+```
+
+---
+
 ## Progress Tracking
 
 ### Phase 1: Foundation ✅
@@ -70,8 +151,8 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [ ] Create example/ directory with working room
 - [ ] Test with actual Soliplex installation
 - [ ] Update README with room usage examples
-- [ ] **LLM Review: Source** - Use `mcp__gemini__read_files` with example configs and modified source files
-- [ ] **LLM Review: Tests** - Use `mcp__gemini__read_files` with integration test files
+- [ ] **LLM Review: Source** - Use `mcp__gemini__read_files` with phase context (see "LLM Review Process" above)
+- [ ] **LLM Review: Tests** - Use `mcp__gemini__read_files` with phase context
 - [ ] Incorporate feedback fixes
 - [ ] Re-verify with Gemini
 - [ ] Commit Phase 3
@@ -85,8 +166,8 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [ ] Final coverage ≥95%
 - [ ] All ruff checks pass
 - [ ] Package builds successfully
-- [ ] **LLM Review: Source** - Use `mcp__gemini__read_files` with all source files and docs
-- [ ] **LLM Review: Tests** - Use `mcp__gemini__read_files` with all test files
+- [ ] **LLM Review: Source** - Use `mcp__gemini__read_files` with phase context (see "LLM Review Process" above)
+- [ ] **LLM Review: Tests** - Use `mcp__gemini__read_files` with phase context
 - [ ] Incorporate feedback fixes
 - [ ] Re-verify with Gemini
 - [ ] Tag release version
