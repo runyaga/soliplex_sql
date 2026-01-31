@@ -135,6 +135,25 @@ Each room can connect to a different database. Adapters are cached per-configura
 
 See `example/rooms/sql-assistant/` for a complete working example.
 
+### Sample Datasets
+
+For testing, we recommend the [Chinook Database](https://www.sqlitetutorial.net/sqlite-sample-database/) - a digital media store with artists, albums, tracks, customers, and invoices:
+
+```bash
+# Download and extract
+curl -L https://www.sqlitetutorial.net/wp-content/uploads/2018/03/chinook.zip -o chinook.zip
+unzip chinook.zip
+```
+
+Then configure a room to use it:
+
+```yaml
+tools:
+  - tool_name: soliplex_sql.tools.query
+    database_url: "sqlite:///./chinook.db"
+    read_only: false  # Enable writes if needed
+```
+
 ## Available Tools
 
 | Tool | Description |
