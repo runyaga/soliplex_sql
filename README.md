@@ -1,27 +1,29 @@
 # soliplex_sql
 
-**SQL Tools MCP Server** - A Model Context Protocol (MCP) server providing SQL database tools for AI assistants.
+**Soliplex SQL Adapter** - Integration of [sql-toolset-pydantic-ai](https://github.com/vstorm-co/sql-toolset-pydantic-ai) (dev branch) into the Soliplex framework.
 
 ## Overview
 
-`soliplex_sql` is an MCP server that exposes SQL database operations as tools for AI assistants. It enables LLMs to interact with SQL databases through a well-defined, type-safe interface with proper schema discovery, query execution, and result formatting.
+`soliplex_sql` adapts the `sql-toolset-pydantic-ai` library for use within the [Soliplex](https://github.com/runyaga/soliplex) ecosystem. It bridges SQL database tools with Soliplex's agent architecture, enabling AI assistants to interact with SQL databases through the AG-UI protocol.
 
-## Features
+## Purpose
 
-- **Schema Discovery**: Introspect database schemas, tables, columns, and relationships
-- **Query Execution**: Execute SELECT queries with parameterized inputs
-- **Write Operations**: INSERT, UPDATE, DELETE with transaction support
-- **Query Building**: Structured query builder for safe SQL generation
-- **Connection Pooling**: Efficient async connection management
-- **Multi-Database Support**: SQLite, PostgreSQL, MySQL (via SQLAlchemy)
+This adapter provides:
+
+- **Soliplex Integration**: Wraps sql-toolset-pydantic-ai tools for Soliplex agent dependencies
+- **AG-UI Compatibility**: Emits state events and progress updates compatible with Soliplex clients
+- **Room Configuration**: Exposes SQL tools as configurable room tools in Soliplex installations
+- **MCP Server Mode**: Can also run as a standalone MCP server
+
+See [docs/architecture.md](docs/architecture.md) for visual architecture diagram.
 
 ## Tech Stack
 
-- **Python 3.12+**
-- **FastMCP**: MCP server framework
-- **SQLAlchemy 2.x**: Async database operations
-- **Pydantic**: Data validation and serialization
-- **aiosqlite/asyncpg**: Async database drivers
+- Python 3.12+
+- pydantic-ai (via soliplex)
+- sql-toolset-pydantic-ai (upstream SQL tools)
+- SQLAlchemy 2.x (async database operations)
+- Pydantic (data validation)
 
 ## Installation
 
@@ -29,7 +31,7 @@
 pip install soliplex-sql
 ```
 
-Or for development:
+For development:
 
 ```bash
 git clone https://github.com/runyaga/soliplex_sql.git
@@ -37,27 +39,36 @@ cd soliplex_sql
 pip install -e ".[dev]"
 ```
 
-## Quick Start
+## Usage
 
-### As MCP Server
+### As Soliplex Room Tool
 
-```python
-from soliplex_sql import create_mcp_server
+Configure in your Soliplex room configuration:
 
-server = create_mcp_server(
-    database_url="sqlite+aiosqlite:///./data.db"
-)
-server.run()
+```yaml
+# room_config.yaml
+id: sql-assistant
+name: SQL Assistant
+
+agent:
+  model_name: qwen3-coder-tools:30b
+  system_prompt: You are a database assistant.
+
+tools:
+  - tool_name: soliplex_sql.tools.list_tables
+  - tool_name: soliplex_sql.tools.execute_query
+  - tool_name: soliplex_sql.tools.describe_table
+
+sql:
+  database_url: sqlite:///./data.db
+  read_only: true
 ```
 
-### Configuration
-
-Configure via environment variables:
+### As Standalone MCP Server
 
 ```bash
-export SOLIPLEX_SQL_DATABASE_URL="postgresql+asyncpg://user:pass@localhost/db"
-export SOLIPLEX_SQL_POOL_SIZE=10
-export SOLIPLEX_SQL_MAX_OVERFLOW=20
+export SOLIPLEX_SQL_DATABASE_URL="sqlite:///./data.db"
+soliplex-sql serve
 ```
 
 ## Available Tools
@@ -65,40 +76,41 @@ export SOLIPLEX_SQL_MAX_OVERFLOW=20
 | Tool | Description |
 |------|-------------|
 | `list_tables` | List all tables in the database |
-| `describe_table` | Get schema info for a table |
-| `execute_query` | Execute a SELECT query |
-| `insert_row` | Insert a new row |
-| `update_rows` | Update rows matching criteria |
-| `delete_rows` | Delete rows matching criteria |
+| `get_schema` | Get database schema overview |
+| `describe_table` | Get detailed table information |
+| `explain_query` | Get query execution plan |
+| `query` | Execute SQL queries with limits |
+| `sample_query` | Quick data exploration |
 
 ## Development
 
 ```bash
-# Install dev dependencies
 pip install -e ".[dev]"
-
-# Run linter
 ruff check src tests
-
-# Run formatter
 ruff format src tests
-
-# Run tests
 pytest
-
-# Run tests with coverage
 pytest --cov=soliplex_sql --cov-report=html
 ```
 
 ## Code Quality Standards
 
-This project follows the code quality standards from [soliplex](https://github.com/runyaga/soliplex):
+Follows [soliplex](https://github.com/runyaga/soliplex) standards:
 
-- **Ruff** for linting and formatting (line-length: 79)
-- **Type hints** on all functions
-- **Pydantic models** for all data structures
-- **Async/await** for all I/O operations
-- **100% test coverage** target
+- Ruff for linting/formatting (line-length: 79)
+- Type hints on all functions
+- Pydantic models for data structures
+- Async/await for I/O operations
+- 95%+ test coverage target
+
+Additionally follows:
+
+- **pydantic-ai idioms**: RunContext, FunctionToolset patterns, dependency injection
+- **Soliplex framework integration**: AG-UI events, ToolConfig registration, StateDeltaEvent emission for task progress
+
+## Related Projects
+
+- [soliplex](https://github.com/runyaga/soliplex) - Parent framework
+- [sql-toolset-pydantic-ai](https://github.com/vstorm-co/sql-toolset-pydantic-ai) - Upstream SQL tools
 
 ## License
 
