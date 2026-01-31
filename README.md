@@ -39,17 +39,20 @@ pip install -e ".[dev]"
 
 ## Usage
 
-### Step 1: Register Tool Config
+### Step 1: Register Tool Configs
 
 Add to your `installation.yaml`:
 
 ```yaml
 meta:
   tool_configs:
-    - soliplex_sql.config.SQLToolConfig
+    - soliplex_sql.config.ListTablesConfig
+    - soliplex_sql.config.GetSchemaConfig
+    - soliplex_sql.config.DescribeTableConfig
+    - soliplex_sql.config.QueryConfig
+    - soliplex_sql.config.ExplainQueryConfig
+    - soliplex_sql.config.SampleQueryConfig
 ```
-
-A single `SQLToolConfig` class handles all SQL tools. The `tool_name` is set automatically from the room configuration.
 
 ### Step 2: Configure Database
 
