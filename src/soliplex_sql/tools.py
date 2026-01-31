@@ -9,15 +9,13 @@ These tools follow pydantic-ai idioms:
 from __future__ import annotations
 
 import threading
-from typing import TYPE_CHECKING
 from typing import Any
+
+from pydantic_ai import RunContext
 
 from soliplex_sql.adapter import SoliplexSQLAdapter
 from soliplex_sql.config import SQLToolConfigBase
 from soliplex_sql.config import SQLToolSettings
-
-if TYPE_CHECKING:
-    import pydantic_ai
 
 # Module-level cache: config_tuple -> adapter (supports concurrent rooms)
 # Using tuple as key (not hash) for stability across processes
@@ -99,7 +97,7 @@ def _get_adapter(ctx: Any) -> SoliplexSQLAdapter:
 
 
 async def list_tables(
-    ctx: pydantic_ai.RunContext[Any],
+    ctx: RunContext[Any],
 ) -> list[str]:
     """List all tables in the database.
 
@@ -114,7 +112,7 @@ async def list_tables(
 
 
 async def get_schema(
-    ctx: pydantic_ai.RunContext[Any],
+    ctx: RunContext[Any],
 ) -> dict[str, Any]:
     """Get database schema overview.
 
@@ -129,7 +127,7 @@ async def get_schema(
 
 
 async def describe_table(
-    ctx: pydantic_ai.RunContext[Any],
+    ctx: RunContext[Any],
     table_name: str,
 ) -> dict[str, Any] | None:
     """Get detailed information about a specific table.
@@ -146,7 +144,7 @@ async def describe_table(
 
 
 async def query(
-    ctx: pydantic_ai.RunContext[Any],
+    ctx: RunContext[Any],
     sql_query: str,
     max_rows: int | None = None,
 ) -> dict[str, Any]:
@@ -165,7 +163,7 @@ async def query(
 
 
 async def explain_query(
-    ctx: pydantic_ai.RunContext[Any],
+    ctx: RunContext[Any],
     sql_query: str,
 ) -> str:
     """Get the execution plan for a SQL query.
@@ -182,7 +180,7 @@ async def explain_query(
 
 
 async def sample_query(
-    ctx: pydantic_ai.RunContext[Any],
+    ctx: RunContext[Any],
     sql_query: str,
     limit: int = 5,
 ) -> dict[str, Any]:

@@ -21,7 +21,6 @@ secrets:
       - kind: "random_chars"
 
 environment:
-  - "OLLAMA_BASE_URL"
   - name: "INSTALLATION_PATH"
     value: "file:."
 
