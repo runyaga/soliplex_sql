@@ -36,7 +36,7 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [x] Run ruff and tests after fixes
 - [x] Re-run Gemini review to verify fixes
 
-### Phase 2: Tool Wrappers & Integration Tests
+### Phase 2: Tool Wrappers & Integration Tests ⏳
 - [ ] Create integration tests with real SQLite (tests/functional/)
 - [ ] Test all 6 tools against real database
 - [ ] Test AG-UI event emission with mocked soliplex
@@ -44,18 +44,26 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [ ] Test connection caching across multiple calls
 - [ ] Test different configs create different adapters
 - [ ] Increase coverage to ≥90%
+- [ ] **LLM Review: Source** (Gemini pro3 - implementation)
+- [ ] **LLM Review: Tests** (Gemini pro3 - test quality)
+- [ ] Incorporate feedback fixes
+- [ ] Re-verify with Gemini
 - [ ] Commit Phase 2
 
-### Phase 3: Room Configuration Integration
+### Phase 3: Room Configuration Integration ⏳
 - [ ] Create example room_config.yaml
 - [ ] Document installation.yaml registration
 - [ ] Test per-room database configuration
 - [ ] Create example/ directory with working room
 - [ ] Test with actual Soliplex installation
 - [ ] Update README with room usage examples
+- [ ] **LLM Review: Source** (Gemini pro3 - implementation)
+- [ ] **LLM Review: Tests** (Gemini pro3 - test quality)
+- [ ] Incorporate feedback fixes
+- [ ] Re-verify with Gemini
 - [ ] Commit Phase 3
 
-### Phase 4: Polish & Release
+### Phase 4: Polish & Release ⏳
 - [ ] Complete README.md documentation
 - [ ] Add CONTRIBUTING.md
 - [ ] Verify LICENSE file
@@ -64,6 +72,10 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [ ] Final coverage ≥95%
 - [ ] All ruff checks pass
 - [ ] Package builds successfully
+- [ ] **LLM Review: Source** (Gemini pro3 - final implementation)
+- [ ] **LLM Review: Tests** (Gemini pro3 - final test quality)
+- [ ] Incorporate feedback fixes
+- [ ] Re-verify with Gemini
 - [ ] Tag release version
 - [ ] Commit Phase 4
 
