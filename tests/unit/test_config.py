@@ -110,25 +110,25 @@ class TestPerToolConfigs:
     """Tests for per-tool configuration classes."""
 
     def test_list_tables_config_tool_name(self) -> None:
-        """ListTablesConfig should have correct tool_name."""
+        """ListTablesConfig should have correct tool_name and unique kind."""
         config = ListTablesConfig()
         assert config.tool_name == "soliplex_sql.tools.list_tables"
-        assert config.kind == "sql"
+        assert config.kind == "sql_list_tables"
 
     def test_query_config_tool_name(self) -> None:
-        """QueryConfig should have correct tool_name."""
+        """QueryConfig should have correct tool_name and unique kind."""
         config = QueryConfig()
         assert config.tool_name == "soliplex_sql.tools.query"
-        assert config.kind == "sql"
+        assert config.kind == "sql_query"
 
     def test_describe_table_config_tool_name(self) -> None:
-        """DescribeTableConfig should have correct tool_name."""
+        """DescribeTableConfig should have correct tool_name and unique kind."""
         config = DescribeTableConfig()
         assert config.tool_name == "soliplex_sql.tools.describe_table"
-        assert config.kind == "sql"
+        assert config.kind == "sql_describe_table"
 
-    def test_configs_share_kind(self) -> None:
-        """All SQL configs should share the same kind."""
+    def test_configs_have_unique_kinds(self) -> None:
+        """All SQL configs should have unique kinds starting with 'sql'."""
         configs = [
             ListTablesConfig(),
             QueryConfig(),
@@ -136,7 +136,10 @@ class TestPerToolConfigs:
         ]
 
         kinds = {c.kind for c in configs}
-        assert kinds == {"sql"}
+        # Each config has unique kind
+        assert len(kinds) == 3
+        # All start with "sql"
+        assert all(k.startswith("sql") for k in kinds)
 
     def test_configs_inherit_settings(self) -> None:
         """Per-tool configs should inherit base settings."""

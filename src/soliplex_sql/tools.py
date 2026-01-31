@@ -23,8 +23,9 @@ from soliplex_sql.config import SQLToolSettings
 if TYPE_CHECKING:
     import pydantic_ai
 
-# Module-level cache: config_hash -> adapter (supports concurrent rooms)
-_adapter_cache: dict[int, SoliplexSQLAdapter] = {}
+# Module-level cache: config_tuple -> adapter (supports concurrent rooms)
+# Using tuple as key (not hash) for stability across processes
+_adapter_cache: dict[tuple, SoliplexSQLAdapter] = {}
 
 
 def _get_config_from_context(ctx: Any) -> SQLToolConfigBase | None:
@@ -45,9 +46,9 @@ def _get_config_from_context(ctx: Any) -> SQLToolConfigBase | None:
 
     tool_configs = deps.tool_configs
 
-    # Look for any SQL tool config (they share 'kind')
+    # Look for any SQL tool config (kinds start with "sql")
     for config in tool_configs.values():
-        if hasattr(config, "kind") and config.kind == "sql":
+        if hasattr(config, "kind") and config.kind.startswith("sql"):
             return config
 
     return None
@@ -78,23 +79,21 @@ def _get_adapter(ctx: Any) -> SoliplexSQLAdapter:
             query_timeout=settings.query_timeout,
         )
 
-    # Cache key based on connection parameters
-    config_hash = hash(
-        (
-            tool_config.database_url,
-            tool_config.read_only,
-            tool_config.max_rows,
-        )
+    # Cache key based on connection parameters (tuple, not hash)
+    cache_key = (
+        tool_config.database_url,
+        tool_config.read_only,
+        tool_config.max_rows,
     )
 
     # Check cache dict (supports multiple DBs concurrently)
-    if config_hash in _adapter_cache:
-        return _adapter_cache[config_hash]
+    if cache_key in _adapter_cache:
+        return _adapter_cache[cache_key]
 
     # Create new adapter and cache it
     sql_deps = tool_config.create_deps()
     adapter = SoliplexSQLAdapter(sql_deps)
-    _adapter_cache[config_hash] = adapter
+    _adapter_cache[cache_key] = adapter
 
     return adapter
 

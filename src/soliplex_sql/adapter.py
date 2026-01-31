@@ -11,8 +11,13 @@ import datetime
 from typing import TYPE_CHECKING
 from typing import Any
 
+from soliplex_sql.exceptions import QueryExecutionError
+
 if TYPE_CHECKING:
     from sql_toolset_pydantic_ai import SQLDatabaseDeps
+
+# SQL statements allowed in read-only mode
+_READONLY_PREFIXES = ("SELECT", "EXPLAIN", "PRAGMA", "SHOW", "DESCRIBE")
 
 
 def _create_task_status_patch(
@@ -284,6 +289,24 @@ class SoliplexSQLAdapter:
             )
             raise
 
+    def _check_read_only(self, sql_query: str) -> None:
+        """Check if query is allowed in read-only mode.
+
+        Args:
+            sql_query: SQL query to check
+
+        Raises:
+            QueryExecutionError: If mutation attempted in read-only mode
+        """
+        if not self.read_only:
+            return
+
+        normalized = sql_query.strip().upper()
+        if not normalized.startswith(_READONLY_PREFIXES):
+            msg = "Database is in read-only mode. "
+            msg += "Only SELECT, EXPLAIN, PRAGMA, SHOW, DESCRIBE allowed."
+            raise QueryExecutionError(msg)
+
     async def query(
         self,
         sql_query: str,
@@ -301,7 +324,13 @@ class SoliplexSQLAdapter:
 
         Returns:
             Query results with columns, rows, metadata
+
+        Raises:
+            QueryExecutionError: If mutation attempted in read-only mode
         """
+        # Enforce read-only mode
+        self._check_read_only(sql_query)
+
         self._emit_task_progress(agui_emitter, related_task_id, "in_progress")
 
         try:

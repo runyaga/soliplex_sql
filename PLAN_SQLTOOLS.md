@@ -22,7 +22,19 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [x] Write unit tests for exceptions
 - [x] Run ruff and fix all issues
 - [x] Verify ≥80% code coverage
-- [x] Commit Phase 1 (`308126e`)
+- [x] Initial commit (`308126e`)
+- [x] **LLM Review & Fixes** (see `FEEDBACK_SQLTOOLS.md`)
+- [ ] Final Phase 1 commit
+
+### Phase 1 Fix Tasks (from LLM Review)
+- [x] **S1**: Enforce read_only in `adapter.py` query methods
+- [x] **I1**: Add `tool` and `tool_requires` properties to config
+- [x] **I2**: Change config `kind` to unique values per tool
+- [x] **I3**: Update `_get_config_from_context` to match new kinds
+- [x] **C1**: Use tuple instead of hash() for cache key
+- [x] **C2**: Fix README tool name typo
+- [x] Run ruff and tests after fixes
+- [x] Re-run Gemini review to verify fixes
 
 ### Phase 2: Tool Wrappers & Integration Tests
 - [ ] Create integration tests with real SQLite (tests/functional/)

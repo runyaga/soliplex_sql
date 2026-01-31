@@ -56,12 +56,16 @@ agent:
 
 tools:
   - tool_name: soliplex_sql.tools.list_tables
-  - tool_name: soliplex_sql.tools.execute_query
+  - tool_name: soliplex_sql.tools.query
   - tool_name: soliplex_sql.tools.describe_table
+```
 
-sql:
-  database_url: sqlite:///./data.db
-  read_only: true
+Configure database via environment variables:
+
+```bash
+export SOLIPLEX_SQL_DATABASE_URL="sqlite:///./data.db"
+export SOLIPLEX_SQL_READ_ONLY="true"
+export SOLIPLEX_SQL_MAX_ROWS="100"
 ```
 
 ### As Standalone MCP Server
