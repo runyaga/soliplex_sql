@@ -154,6 +154,9 @@ Report findings in this format:
 - [x] **LLM Review: Source** - Gemini pro3 `read_files` (see FEEDBACK_SQLTOOLS.md)
 - [x] Incorporate feedback fixes (D1-D4: docs + SQLToolConfig alias)
 - [x] Commit Phase 3 (`91ec63c`)
+- [x] Add functional integration tests (`5e7f49e`)
+- [x] Add sample database with seeding script
+- [x] Add example documentation (EXAMPLE.md)
 
 ### Phase 4: Polish & Release ✅
 - [x] Complete README.md documentation
@@ -162,12 +165,11 @@ Report findings in this format:
 - [x] Add GitHub CI actions (.github/workflows/ci.yml)
 - [x] All ruff checks pass
 - [x] Package builds successfully
+- [x] Commit Phase 4 (`f78e8fa`)
 - [ ] 100% type hint coverage (deferred - good coverage exists)
 - [ ] All public APIs have docstrings (deferred - key APIs documented)
 - [ ] Final coverage ≥95% (current: 90%+)
-- [ ] **LLM Review: Source** - Optional for initial release
-- [ ] **LLM Review: Tests** - Optional for initial release
-- [ ] Tag release version (pending: ready for 0.1.0 release)
+- [ ] Tag release version (ready for 0.1.0 release)
 
 ## Upstream Library Overview
 
