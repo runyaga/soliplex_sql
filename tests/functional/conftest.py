@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
@@ -131,14 +130,6 @@ async def read_only_adapter(
 ) -> SoliplexSQLAdapter:
     """Create read-only adapter."""
     return SoliplexSQLAdapter(read_only_db)
-
-
-@pytest.fixture
-def mock_agui_emitter() -> MagicMock:
-    """Create mock AG-UI emitter for event testing."""
-    emitter = MagicMock()
-    emitter.emit = MagicMock()
-    return emitter
 
 
 @pytest.fixture(autouse=True)

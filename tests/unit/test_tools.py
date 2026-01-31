@@ -9,7 +9,6 @@ from unittest.mock import patch
 from soliplex_sql.config import SQLToolConfigBase
 from soliplex_sql.tools import _adapter_cache
 from soliplex_sql.tools import _get_adapter
-from soliplex_sql.tools import _get_agui_emitter
 from soliplex_sql.tools import _get_config_from_context
 from soliplex_sql.tools import close_all
 
@@ -43,31 +42,6 @@ class TestGetConfigFromContext:
         result = _get_config_from_context(ctx)
 
         assert result is config
-
-
-class TestGetAGUIEmitter:
-    """Tests for _get_agui_emitter."""
-
-    def test_returns_none_without_deps(self) -> None:
-        """Should return None if ctx has no deps."""
-        ctx = MagicMock(spec=[])
-        assert _get_agui_emitter(ctx) is None
-
-    def test_returns_none_without_emitter(self) -> None:
-        """Should return None if deps has no emitter."""
-        ctx = MagicMock()
-        ctx.deps = MagicMock(spec=[])
-        assert _get_agui_emitter(ctx) is None
-
-    def test_returns_emitter(self) -> None:
-        """Should return emitter from deps."""
-        emitter = MagicMock()
-        ctx = MagicMock()
-        ctx.deps.agui_emitter = emitter
-
-        result = _get_agui_emitter(ctx)
-
-        assert result is emitter
 
 
 class TestGetAdapter:

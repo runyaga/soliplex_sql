@@ -192,9 +192,70 @@ All issues verified as FIXED by Gemini pro3:
 
 ---
 
+## Phase 2.5 Review (2025-01-31)
+
+**Reviewer:** Gemini pro3
+
+### Scope: AG-UI Event Emission Removal
+
+All AG-UI related code successfully removed:
+- `_create_task_status_patch()` removed from adapter.py
+- `_emit_task_progress()` removed from adapter.py
+- `agui_emitter` and `related_task_id` parameters removed from all methods
+- `_get_agui_emitter()` removed from tools.py
+- `TestGetAGUIEmitter` class removed from test_tools.py
+- `TestCreateTaskStatusPatch` class removed from test_adapter.py
+- `mock_agui_emitter` fixtures removed from conftest.py files
+
+### Source Implementation Analysis
+
+| ID | File:Line | Issue | Severity | Status |
+|----|-----------|-------|----------|--------|
+| T1 | `tools.py:202` | Thread Safety: `close_all()` iterates cache without lock | MEDIUM | ✅ |
+| S2 | `adapter.py:139` | Security: Prefix check vulnerable to multi-statement SQL | HIGH | Deferred |
+| P3 | `adapter.py:169` | Performance: All rows fetched before truncation | MEDIUM | Documented |
+
+### Analysis Notes
+
+**T1 (Thread Safety):**
+- `close_all()` was iterating `_adapter_cache.values()` without lock
+- If `_get_adapter` runs concurrently, could cause `RuntimeError` or orphaned connections
+- **Fixed:** Now acquires lock, copies adapters, clears cache, then closes outside lock
+
+**S2 (Multi-Statement SQL):**
+- `_check_read_only` uses prefix matching which doesn't catch `SELECT 1; DROP TABLE`
+- SQLite by default doesn't execute multiple statements in single call
+- Documented limitation, acceptable for current use case
+- Could be hardened in Phase 4 if needed
+
+**P3 (Memory Usage):**
+- `query()` fetches all rows then slices to `max_rows`
+- Could OOM on massive result sets
+- This is an upstream library limitation
+- Documented as expected behavior
+
+### Test Coverage
+
+All Phase 2 tracked items (T1-T3) completed:
+- T1: AG-UI tests removed from test_adapter.py ✅
+- T2: AG-UI fixtures removed from conftest.py ✅
+- T3: `_get_agui_emitter` tests removed from test_tools.py ✅
+
+**Coverage:** 90.51% (exceeds 80% requirement)
+
+### Summary
+
+| Category | Issues | Fixed |
+|----------|--------|-------|
+| Medium (Thread Safety) | 1 | 1 ✅ |
+| High (Security) | 1 | Deferred |
+| Medium (Performance) | 1 | Documented |
+
+---
+
 ## Phase 3 Review
 
-*Pending Phase 2 completion*
+*Pending Phase 2.5 completion*
 
 ---
 

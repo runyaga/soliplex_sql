@@ -17,19 +17,10 @@ def temp_db_path() -> Path:
 
 
 @pytest.fixture
-def mock_agui_emitter() -> MagicMock:
-    """Create a mock AG-UI emitter."""
-    emitter = MagicMock()
-    emitter.emit = MagicMock()
-    return emitter
-
-
-@pytest.fixture
-def mock_ctx(mock_agui_emitter: MagicMock) -> MagicMock:
+def mock_ctx() -> MagicMock:
     """Create a mock RunContext with deps."""
     ctx = MagicMock()
     ctx.deps = MagicMock()
-    ctx.deps.agui_emitter = mock_agui_emitter
     ctx.deps.tool_configs = {}
     return ctx
 

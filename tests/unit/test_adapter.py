@@ -2,48 +2,12 @@
 
 from __future__ import annotations
 
-import sys
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 
 import pytest
 
 from soliplex_sql.adapter import SoliplexSQLAdapter
-from soliplex_sql.adapter import _create_task_status_patch
-
-
-class TestCreateTaskStatusPatch:
-    """Tests for JSON Patch creation."""
-
-    def test_basic_patch(self) -> None:
-        """Should create basic status patch."""
-        patches = _create_task_status_patch("task-123", "in_progress")
-
-        assert len(patches) == 2
-        assert patches[0]["op"] == "replace"
-        assert patches[0]["path"] == "/task_list/tasks/task-123/status"
-        assert patches[0]["value"] == "in_progress"
-
-    def test_patch_with_result(self) -> None:
-        """Should include result when provided."""
-        patches = _create_task_status_patch(
-            "task-456", "completed", "Found 5 tables"
-        )
-
-        assert len(patches) == 3
-        result_patch = patches[2]
-        assert result_patch["op"] == "replace"
-        assert result_patch["path"] == "/task_list/tasks/task-456/result"
-        assert result_patch["value"] == "Found 5 tables"
-
-    def test_patch_includes_timestamp(self) -> None:
-        """Should include updated_at timestamp."""
-        patches = _create_task_status_patch("task-789", "completed")
-
-        timestamp_patch = patches[1]
-        expected_path = "/task_list/tasks/task-789/updated_at"
-        assert timestamp_patch["path"] == expected_path
-        assert "T" in timestamp_patch["value"]  # ISO format
 
 
 class TestSoliplexSQLAdapter:
@@ -80,60 +44,6 @@ class TestSoliplexSQLAdapter:
 
         assert tables == ["users", "posts"]
         mock_sql_deps.database.get_tables.assert_called_once()
-
-    async def test_list_tables_emits_progress(
-        self,
-        mock_sql_deps: MagicMock,
-        mock_agui_emitter: MagicMock,
-    ) -> None:
-        """Should emit AG-UI events when task_id provided."""
-        # Mock the soliplex import
-        mock_event_class = MagicMock()
-        mock_events_module = MagicMock()
-        mock_events_module.StateDeltaEvent = mock_event_class
-        mock_agui_module = MagicMock()
-        mock_agui_module.events = mock_events_module
-        mock_soliplex = MagicMock()
-        mock_soliplex.agui = mock_agui_module
-
-        sys.modules["soliplex"] = mock_soliplex
-        sys.modules["soliplex.agui"] = mock_agui_module
-        sys.modules["soliplex.agui.events"] = mock_events_module
-
-        try:
-            mock_sql_deps.database.get_tables = AsyncMock(
-                return_value=["users"]
-            )
-            adapter = SoliplexSQLAdapter(mock_sql_deps)
-
-            await adapter.list_tables(
-                agui_emitter=mock_agui_emitter,
-                related_task_id="task-001",
-            )
-
-            # Should emit at least 2 events (in_progress, completed)
-            assert mock_agui_emitter.emit.call_count >= 2
-        finally:
-            # Clean up mocked modules
-            sys.modules.pop("soliplex", None)
-            sys.modules.pop("soliplex.agui", None)
-            sys.modules.pop("soliplex.agui.events", None)
-
-    async def test_list_tables_no_emit_without_task_id(
-        self,
-        mock_sql_deps: MagicMock,
-        mock_agui_emitter: MagicMock,
-    ) -> None:
-        """Should not emit events without task_id."""
-        mock_sql_deps.database.get_tables = AsyncMock(return_value=["users"])
-        adapter = SoliplexSQLAdapter(mock_sql_deps)
-
-        await adapter.list_tables(
-            agui_emitter=mock_agui_emitter,
-            related_task_id=None,
-        )
-
-        mock_agui_emitter.emit.assert_not_called()
 
     async def test_get_schema(
         self,

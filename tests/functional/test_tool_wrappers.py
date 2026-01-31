@@ -88,7 +88,6 @@ def mock_ctx_with_db(tool_test_db: SQLDatabaseDeps) -> MagicMock:
     ctx = MagicMock()
     ctx.deps = MagicMock()
     ctx.deps.tool_configs = {"sql": config}
-    ctx.deps.agui_emitter = None
 
     return ctx
 

@@ -1,10 +1,5 @@
 """Soliplex-compatible tool functions.
 
-These tools follow Soliplex conventions:
-- Accept RunContext[AgentDependencies]
-- Support related_task_id for task progress
-- Emit AG-UI events via agui_emitter
-
 These tools follow pydantic-ai idioms:
 - RunContext dependency injection
 - Async tool functions
@@ -102,83 +97,57 @@ def _get_adapter(ctx: Any) -> SoliplexSQLAdapter:
         return adapter
 
 
-def _get_agui_emitter(ctx: Any) -> Any:
-    """Extract AG-UI emitter from context if available.
-
-    Args:
-        ctx: RunContext with deps
-
-    Returns:
-        agui_emitter or None
-    """
-    if not hasattr(ctx, "deps"):
-        return None
-    if not hasattr(ctx.deps, "agui_emitter"):
-        return None
-    return ctx.deps.agui_emitter
-
-
 async def list_tables(
     ctx: pydantic_ai.RunContext[Any],
-    related_task_id: str | None = None,
 ) -> list[str]:
     """List all tables in the database.
 
     Args:
         ctx: PydanticAI RunContext
-        related_task_id: Optional task ID to update with progress
 
     Returns:
         List of table names
     """
     adapter = _get_adapter(ctx)
-    emitter = _get_agui_emitter(ctx)
-    return await adapter.list_tables(emitter, related_task_id)
+    return await adapter.list_tables()
 
 
 async def get_schema(
     ctx: pydantic_ai.RunContext[Any],
-    related_task_id: str | None = None,
 ) -> dict[str, Any]:
     """Get database schema overview.
 
     Args:
         ctx: PydanticAI RunContext
-        related_task_id: Optional task ID to update with progress
 
     Returns:
         Schema information with tables, columns, and row counts
     """
     adapter = _get_adapter(ctx)
-    emitter = _get_agui_emitter(ctx)
-    return await adapter.get_schema(emitter, related_task_id)
+    return await adapter.get_schema()
 
 
 async def describe_table(
     ctx: pydantic_ai.RunContext[Any],
     table_name: str,
-    related_task_id: str | None = None,
 ) -> dict[str, Any] | None:
     """Get detailed information about a specific table.
 
     Args:
         ctx: PydanticAI RunContext
         table_name: Name of the table to describe
-        related_task_id: Optional task ID to update with progress
 
     Returns:
         Table information including columns, types, constraints
     """
     adapter = _get_adapter(ctx)
-    emitter = _get_agui_emitter(ctx)
-    return await adapter.describe_table(table_name, emitter, related_task_id)
+    return await adapter.describe_table(table_name)
 
 
 async def query(
     ctx: pydantic_ai.RunContext[Any],
     sql_query: str,
     max_rows: int | None = None,
-    related_task_id: str | None = None,
 ) -> dict[str, Any]:
     """Execute a SQL query and return results.
 
@@ -186,41 +155,35 @@ async def query(
         ctx: PydanticAI RunContext
         sql_query: SQL query to execute
         max_rows: Maximum rows to return (optional)
-        related_task_id: Optional task ID to update with progress
 
     Returns:
         Query results with columns, rows, and metadata
     """
     adapter = _get_adapter(ctx)
-    emitter = _get_agui_emitter(ctx)
-    return await adapter.query(sql_query, max_rows, emitter, related_task_id)
+    return await adapter.query(sql_query, max_rows)
 
 
 async def explain_query(
     ctx: pydantic_ai.RunContext[Any],
     sql_query: str,
-    related_task_id: str | None = None,
 ) -> str:
     """Get the execution plan for a SQL query.
 
     Args:
         ctx: PydanticAI RunContext
         sql_query: SQL query to analyze
-        related_task_id: Optional task ID to update with progress
 
     Returns:
         Query execution plan
     """
     adapter = _get_adapter(ctx)
-    emitter = _get_agui_emitter(ctx)
-    return await adapter.explain_query(sql_query, emitter, related_task_id)
+    return await adapter.explain_query(sql_query)
 
 
 async def sample_query(
     ctx: pydantic_ai.RunContext[Any],
     sql_query: str,
     limit: int = 5,
-    related_task_id: str | None = None,
 ) -> dict[str, Any]:
     """Execute a sample query for quick data exploration.
 
@@ -228,23 +191,25 @@ async def sample_query(
         ctx: PydanticAI RunContext
         sql_query: SQL query to execute
         limit: Maximum rows (default: 5)
-        related_task_id: Optional task ID to update with progress
 
     Returns:
         Sample query results
     """
     adapter = _get_adapter(ctx)
-    emitter = _get_agui_emitter(ctx)
-    return await adapter.sample_query(
-        sql_query, limit, emitter, related_task_id
-    )
+    return await adapter.sample_query(sql_query, limit)
 
 
 async def close_all() -> None:
     """Close all cached database connections.
 
     Call this on application shutdown for graceful cleanup.
+    Thread-safe: acquires lock before accessing cache.
     """
-    for adapter in _adapter_cache.values():
+    # Thread-safe: copy adapters and clear under lock
+    with _adapter_cache_lock:
+        adapters = list(_adapter_cache.values())
+        _adapter_cache.clear()
+
+    # Close outside lock to avoid holding lock during I/O
+    for adapter in adapters:
         await adapter.close()
-    _adapter_cache.clear()
