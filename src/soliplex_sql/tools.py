@@ -13,6 +13,7 @@ These tools follow pydantic-ai idioms:
 
 from __future__ import annotations
 
+import threading
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
 # Module-level cache: config_tuple -> adapter (supports concurrent rooms)
 # Using tuple as key (not hash) for stability across processes
 _adapter_cache: dict[tuple, SoliplexSQLAdapter] = {}
+_adapter_cache_lock = threading.Lock()
 
 
 def _get_config_from_context(ctx: Any) -> SQLToolConfigBase | None:
@@ -86,16 +88,18 @@ def _get_adapter(ctx: Any) -> SoliplexSQLAdapter:
         tool_config.max_rows,
     )
 
-    # Check cache dict (supports multiple DBs concurrently)
-    if cache_key in _adapter_cache:
-        return _adapter_cache[cache_key]
+    # Thread-safe cache access
+    with _adapter_cache_lock:
+        # Check cache dict (supports multiple DBs concurrently)
+        if cache_key in _adapter_cache:
+            return _adapter_cache[cache_key]
 
-    # Create new adapter and cache it
-    sql_deps = tool_config.create_deps()
-    adapter = SoliplexSQLAdapter(sql_deps)
-    _adapter_cache[cache_key] = adapter
+        # Create new adapter and cache it
+        sql_deps = tool_config.create_deps()
+        adapter = SoliplexSQLAdapter(sql_deps)
+        _adapter_cache[cache_key] = adapter
 
-    return adapter
+        return adapter
 
 
 def _get_agui_emitter(ctx: Any) -> Any:

@@ -38,11 +38,15 @@ class SQLToolSettings(BaseSettings):
     query_timeout: float = 30.0
 
 
-def _create_backend(database_url: str) -> SQLDatabaseProtocol:
+def _create_backend(
+    database_url: str,
+    read_only: bool = True,
+) -> SQLDatabaseProtocol:
     """Create appropriate backend from database URL.
 
     Args:
         database_url: Database connection string
+        read_only: Whether database should be read-only
 
     Returns:
         SQLDatabaseProtocol implementation
@@ -55,9 +59,9 @@ def _create_backend(database_url: str) -> SQLDatabaseProtocol:
 
     if database_url.startswith("sqlite"):
         path = database_url.replace("sqlite:///", "")
-        return SQLiteDatabase(path)
+        return SQLiteDatabase(path, read_only=read_only)
     elif database_url.startswith("postgresql"):
-        return PostgreSQLDatabase(database_url)
+        return PostgreSQLDatabase(database_url, read_only=read_only)
     else:
         msg = f"Unsupported database URL: {database_url}. "
         msg += "Supported: sqlite:///, postgresql://"
@@ -150,7 +154,7 @@ class SQLToolConfigBase:
         """Create SQLDatabaseDeps from this configuration."""
         from sql_toolset_pydantic_ai import SQLDatabaseDeps
 
-        backend = _create_backend(self.database_url)
+        backend = _create_backend(self.database_url, read_only=self.read_only)
         return SQLDatabaseDeps(
             database=backend,
             read_only=self.read_only,

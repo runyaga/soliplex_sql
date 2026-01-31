@@ -36,19 +36,31 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [x] Run ruff and tests after fixes
 - [x] Re-run Gemini review to verify fixes
 
-### Phase 2: Tool Wrappers & Integration Tests ⏳
-- [ ] Create integration tests with real SQLite (tests/functional/)
-- [ ] Test all 6 tools against real database
-- [ ] Test AG-UI event emission with mocked soliplex
-- [ ] Test read_only mode blocks mutations
-- [ ] Test connection caching across multiple calls
-- [ ] Test different configs create different adapters
-- [ ] Increase coverage to ≥90%
-- [ ] **LLM Review: Source** (Gemini pro3 - implementation)
-- [ ] **LLM Review: Tests** (Gemini pro3 - test quality)
-- [ ] Incorporate feedback fixes
-- [ ] Re-verify with Gemini
-- [ ] Commit Phase 2
+### Phase 2: Integration Tests ✅
+- [x] Create integration tests with real SQLite (tests/functional/)
+- [x] Test all 6 tools against real database
+- [x] Test read_only mode blocks mutations
+- [x] Test connection caching across multiple calls
+- [x] Test different configs create different adapters
+- [x] Increase coverage to ≥90% (achieved: 93.75%)
+- [x] **LLM Review: Source** - Gemini pro3 `read_files` (see FEEDBACK_SQLTOOLS.md)
+- [x] **LLM Review: Tests** - Gemini pro3 `read_files` (see FEEDBACK_SQLTOOLS.md)
+- [x] Incorporate feedback fixes (H1: CTE support, H3: thread-safe cache)
+- [x] Re-verify: 98 tests pass
+- [x] Commit Phase 2
+
+### Phase 2.5: Remove AG-UI Event Emission ⏳
+- [ ] Remove `_create_task_status_patch()` from adapter.py
+- [ ] Remove `_emit_task_progress()` from adapter.py
+- [ ] Remove `agui_emitter` and `related_task_id` parameters from all methods
+- [ ] Remove `_get_agui_emitter()` from tools.py
+- [ ] Remove `related_task_id` parameters from tool functions
+- [ ] Update unit tests to remove AG-UI mocks
+- [ ] Update functional tests to remove AG-UI assertions
+- [ ] Run ruff and fix all issues
+- [ ] Verify tests pass
+- [ ] **LLM Review: Source** - Use `mcp__gemini__read_files` with modified source files
+- [ ] Commit Phase 2.5
 
 ### Phase 3: Room Configuration Integration ⏳
 - [ ] Create example room_config.yaml
@@ -57,8 +69,8 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [ ] Create example/ directory with working room
 - [ ] Test with actual Soliplex installation
 - [ ] Update README with room usage examples
-- [ ] **LLM Review: Source** (Gemini pro3 - implementation)
-- [ ] **LLM Review: Tests** (Gemini pro3 - test quality)
+- [ ] **LLM Review: Source** - Use `mcp__gemini__read_files` with example configs and modified source files
+- [ ] **LLM Review: Tests** - Use `mcp__gemini__read_files` with integration test files
 - [ ] Incorporate feedback fixes
 - [ ] Re-verify with Gemini
 - [ ] Commit Phase 3
@@ -72,8 +84,8 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [ ] Final coverage ≥95%
 - [ ] All ruff checks pass
 - [ ] Package builds successfully
-- [ ] **LLM Review: Source** (Gemini pro3 - final implementation)
-- [ ] **LLM Review: Tests** (Gemini pro3 - final test quality)
+- [ ] **LLM Review: Source** - Use `mcp__gemini__read_files` with all source files and docs
+- [ ] **LLM Review: Tests** - Use `mcp__gemini__read_files` with all test files
 - [ ] Incorporate feedback fixes
 - [ ] Re-verify with Gemini
 - [ ] Tag release version

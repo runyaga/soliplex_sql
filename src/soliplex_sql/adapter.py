@@ -17,7 +17,10 @@ if TYPE_CHECKING:
     from sql_toolset_pydantic_ai import SQLDatabaseDeps
 
 # SQL statements allowed in read-only mode
-_READONLY_PREFIXES = ("SELECT", "EXPLAIN", "PRAGMA", "SHOW", "DESCRIBE")
+# WITH is included for Common Table Expressions (CTEs)
+_READONLY_PREFIXES = (
+    "SELECT", "EXPLAIN", "PRAGMA", "SHOW", "DESCRIBE", "WITH"
+)
 
 
 def _create_task_status_patch(
