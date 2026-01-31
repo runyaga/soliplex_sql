@@ -4,7 +4,7 @@
 
 ## Overview
 
-`soliplex_sql` adapts the `sql-toolset-pydantic-ai` library for use within the [Soliplex](https://github.com/runyaga/soliplex) ecosystem. It bridges SQL database tools with Soliplex's agent architecture, enabling AI assistants to interact with SQL databases.
+`soliplex_sql` adapts the `sql-toolset-pydantic-ai` library for use within the [Soliplex](https://github.com/soliplex/soliplex) ecosystem. It bridges SQL database tools with Soliplex's agent architecture, enabling AI assistants to interact with SQL databases.
 
 ## Purpose
 
@@ -32,7 +32,7 @@ pip install soliplex-sql
 For development:
 
 ```bash
-git clone https://github.com/runyaga/soliplex_sql.git
+git clone https://github.com/soliplex/soliplex_sql.git
 cd soliplex_sql
 pip install -e ".[dev]"
 ```
@@ -177,7 +177,7 @@ pytest --cov=soliplex_sql --cov-report=html
 
 ## Code Quality Standards
 
-Follows [soliplex](https://github.com/runyaga/soliplex) standards:
+Follows [soliplex](https://github.com/soliplex/soliplex) standards:
 
 - Ruff for linting/formatting (line-length: 79)
 - Type hints on all functions
@@ -192,7 +192,7 @@ Additionally follows:
 
 ## Related Projects
 
-- [soliplex](https://github.com/runyaga/soliplex) - Parent framework
+- [soliplex](https://github.com/soliplex/soliplex) - Parent framework
 - [sql-toolset-pydantic-ai](https://github.com/vstorm-co/sql-toolset-pydantic-ai) - Upstream SQL tools
 
 ## License

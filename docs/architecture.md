@@ -6,10 +6,8 @@ Visual diagram of the adapter architecture.
 ┌─────────────────────────────────────────────────────────┐
 │                     Soliplex Agent                       │
 │  ┌─────────────────────────────────────────────────────┐│
-│  │                Agent Dependencies                    ││
-│  │  ┌─────────────┐  ┌────────────┐  ┌──────────────┐ ││
-│  │  │ agui_emitter│  │tool_configs│  │   state      │ ││
-│  │  └─────────────┘  └────────────┘  └──────────────┘ ││
+│  │                  Tool Configs                        ││
+│  │         (SQLToolConfig per tool instance)            ││
 │  └──────────────────────────┬──────────────────────────┘│
 └─────────────────────────────┼───────────────────────────┘
                               │
@@ -17,10 +15,10 @@ Visual diagram of the adapter architecture.
 ┌─────────────────────────────────────────────────────────┐
 │                   soliplex_sql Adapter                   │
 │  ┌─────────────────────────────────────────────────────┐│
-│  │              SQL Tool Wrappers                       ││
-│  │  • Injects AgentDependencies context                ││
-│  │  • Emits StateDeltaEvents for task progress         ││
-│  │  • Maps to Soliplex ToolConfig system               ││
+│  │              SQL Tool Functions                      ││
+│  │  • Receives tool_config via Soliplex injection      ││
+│  │  • Caches adapters per database configuration       ││
+│  │  • Enforces read_only mode when configured          ││
 │  └──────────────────────────┬──────────────────────────┘│
 └─────────────────────────────┼───────────────────────────┘
                               │
@@ -28,10 +26,10 @@ Visual diagram of the adapter architecture.
 ┌─────────────────────────────────────────────────────────┐
 │              sql-toolset-pydantic-ai                     │
 │  ┌─────────────┐  ┌────────────┐  ┌──────────────────┐ │
-│  │list_tables  │  │execute_sql │  │schema_discovery  │ │
+│  │list_tables  │  │   query    │  │  describe_table  │ │
 │  └─────────────┘  └────────────┘  └──────────────────┘ │
 │  ┌─────────────┐  ┌────────────┐  ┌──────────────────┐ │
-│  │insert_row   │  │update_rows │  │delete_rows       │ │
+│  │ get_schema  │  │explain_query│ │  sample_query    │ │
 │  └─────────────┘  └────────────┘  └──────────────────┘ │
 └─────────────────────────────────────────────────────────┘
                               │
@@ -45,7 +43,7 @@ Visual diagram of the adapter architecture.
 ## Data Flow
 
 1. **Soliplex Agent** receives user query
-2. **Agent Dependencies** provide context (emitter, config, state)
-3. **soliplex_sql Adapter** wraps calls with AG-UI events
+2. **Tool Config** injected via Soliplex's native `tool_config` pattern
+3. **soliplex_sql Adapter** creates/caches database connection
 4. **sql-toolset-pydantic-ai** executes database operations
-5. Results flow back through the stack with progress updates
+5. Results returned to agent for response generation
