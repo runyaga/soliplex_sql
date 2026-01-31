@@ -49,18 +49,19 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [x] Re-verify: 98 tests pass
 - [x] Commit Phase 2
 
-### Phase 2.5: Remove AG-UI Event Emission ⏳
-- [ ] Remove `_create_task_status_patch()` from adapter.py
-- [ ] Remove `_emit_task_progress()` from adapter.py
-- [ ] Remove `agui_emitter` and `related_task_id` parameters from all methods
-- [ ] Remove `_get_agui_emitter()` from tools.py
-- [ ] Remove `related_task_id` parameters from tool functions
-- [ ] Update unit tests to remove AG-UI mocks
-- [ ] Update functional tests to remove AG-UI assertions
-- [ ] Run ruff and fix all issues
-- [ ] Verify tests pass
-- [ ] **LLM Review: Source** - Use `mcp__gemini__read_files` with modified source files
-- [ ] Commit Phase 2.5
+### Phase 2.5: Remove AG-UI Event Emission ✅
+- [x] Remove `_create_task_status_patch()` from adapter.py
+- [x] Remove `_emit_task_progress()` from adapter.py
+- [x] Remove `agui_emitter` and `related_task_id` parameters from all methods
+- [x] Remove `_get_agui_emitter()` from tools.py
+- [x] Remove `related_task_id` parameters from tool functions
+- [x] Update unit tests to remove AG-UI mocks
+- [x] Update functional tests to remove AG-UI fixtures
+- [x] Run ruff and fix all issues
+- [x] Verify tests pass (90 tests, 90.51% coverage)
+- [x] **LLM Review: Source** - Gemini pro3 `read_files` (see FEEDBACK_SQLTOOLS.md)
+- [x] Fix T1: Thread-safe `close_all()`
+- [x] Commit Phase 2.5 (`1254a48`)
 
 ### Phase 3: Room Configuration Integration ⏳
 - [ ] Create example room_config.yaml
