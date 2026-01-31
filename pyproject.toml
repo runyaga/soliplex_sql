@@ -27,8 +27,6 @@ dependencies = [
 [project.optional-dependencies]
 soliplex = ["soliplex"]
 postgres = ["asyncpg >= 0.29.0"]
-
-[dependency-groups]
 dev = [
     "pytest >= 8.0.0",
     "pytest-cov >= 4.0.0",
