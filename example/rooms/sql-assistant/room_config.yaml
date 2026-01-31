@@ -1,55 +1,60 @@
 # SQL Database Assistant Room Configuration
 #
 # This room provides AI-assisted SQL database exploration and querying.
-# Database connection is configured via environment variables.
-#
-# Required environment variables:
-#   SOLIPLEX_SQL_DATABASE_URL - Connection string
-#     Examples:
-#       sqlite:///:memory:        (in-memory SQLite)
-#       sqlite:///./data.db       (file-based SQLite)
-#       postgresql://user:pass@host/db  (PostgreSQL)
-#
-# Optional environment variables:
-#   SOLIPLEX_SQL_READ_ONLY    - Enforce read-only mode (default: true)
-#   SOLIPLEX_SQL_MAX_ROWS     - Max rows returned (default: 100)
-#   SOLIPLEX_SQL_QUERY_TIMEOUT - Query timeout seconds (default: 30.0)
+# Uses sample_data.db with products, customers, orders, and order_items.
 
 id: sql-assistant
 name: SQL Database Assistant
 description: Query and explore your database with AI assistance
 
 agent:
-  model_name: qwen3-coder:30b
+  model_name: gpt-oss:20b
   system_prompt: |
-    You are a helpful database assistant. You can:
-    - List and describe database tables
-    - Execute SQL queries
-    - Explain query plans
-    - Help users understand their data
+    You are a helpful database assistant with access to SQL tools.
 
-    Always use the SQL tools to interact with the database.
-    Be careful with data - the database may be in read-only mode.
+    IMPORTANT: You MUST use the provided tools to interact with the database.
+    DO NOT write out tool calls as text - actually invoke the tools.
 
-    When exploring a database:
-    1. First use list_tables to see available tables
-    2. Use describe_table to understand table structure
-    3. Use sample_query for quick data exploration
-    4. Use query for full queries (results limited by max_rows)
-    5. Use explain_query to analyze query performance
+    Available tools:
+    - list_tables: List all tables in the database
+    - describe_table: Get table structure (columns, types)
+    - sample_query: Quick data preview (limited rows)
+    - query: Execute SQL queries
+    - get_schema: Get full database schema
+    - explain_query: Analyze query performance
 
-# All SQL tools share configuration via environment variables
+    The database contains: products, customers, orders, order_items tables.
+    The database is read-only.
+
+    When a user asks about data:
+    1. Use list_tables or get_schema to see available tables
+    2. Use describe_table to understand structure
+    3. Use sample_query or query to retrieve data
+
+    Always execute tools - never just describe what you would do.
+
+# All SQL tools use the sample database
 tools:
   - tool_name: soliplex_sql.tools.list_tables
+    database_url: "sqlite:///./example/sample_data.db"
+    read_only: true
   - tool_name: soliplex_sql.tools.get_schema
+    database_url: "sqlite:///./example/sample_data.db"
   - tool_name: soliplex_sql.tools.describe_table
+    database_url: "sqlite:///./example/sample_data.db"
   - tool_name: soliplex_sql.tools.query
+    database_url: "sqlite:///./example/sample_data.db"
+    read_only: true
+    max_rows: 100
   - tool_name: soliplex_sql.tools.explain_query
+    database_url: "sqlite:///./example/sample_data.db"
   - tool_name: soliplex_sql.tools.sample_query
+    database_url: "sqlite:///./example/sample_data.db"
+    max_rows: 10
 
 suggestions:
   - "What tables are in the database?"
-  - "Describe the users table"
+  - "Describe the customers table"
   - "Show me a sample of the orders data"
   - "How many records are in each table?"
   - "What are the relationships between tables?"

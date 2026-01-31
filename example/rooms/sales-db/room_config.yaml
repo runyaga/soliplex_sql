@@ -1,40 +1,62 @@
-# Sales Database Room - Per-Room Database Configuration Example
+# Sales Database Room - Sales Analytics
 #
-# This demonstrates overriding database settings per-room.
-# Each room can connect to a different database.
-#
-# Using in-memory SQLite for demonstration. In production,
-# replace with your actual database URL.
+# This room is optimized for sales data analysis.
+# Uses the sample database with products, customers, orders.
 
 id: sales-db
 name: Sales Database
-description: Query the sales database
+description: Query the sales database for insights and analytics
 
 agent:
-  model_name: qwen3-coder:30b
+  model_name: gpt-oss:20b
   system_prompt: |
-    You are a sales data analyst. Help users explore sales data.
-    The database contains orders, customers, and products.
+    You are a sales data analyst with access to SQL tools.
 
-# Override database settings for this specific room
-# Using in-memory SQLite - replace with your actual DB URL
+    IMPORTANT: You MUST use the provided tools to query the database.
+    DO NOT write out tool calls as text - actually invoke the tools.
+
+    Available tools:
+    - list_tables: List all tables
+    - query: Execute SQL queries (use this for analysis)
+    - describe_table: Get table structure
+    - get_schema: Get full schema
+    - sample_query: Quick data preview
+
+    Database schema:
+    - products: id, name, category, price, stock_quantity
+    - customers: id, name, email, city, country
+    - orders: id, customer_id, order_date, status, total_amount
+    - order_items: id, order_id, product_id, quantity, unit_price
+
+    For time-based analysis, use SQLite date functions:
+    - This month: strftime('%Y-%m', order_date) = strftime('%Y-%m', 'now')
+    - By month: strftime('%Y-%m', order_date)
+
+    Always execute tools to get real data - never just describe what you would do.
+
+# All tools use the sample database with sales data
 tools:
   - tool_name: soliplex_sql.tools.list_tables
-    database_url: "sqlite:///:memory:"
+    database_url: "sqlite:///./example/sample_data.db"
     read_only: true
-    max_rows: 500
 
   - tool_name: soliplex_sql.tools.query
-    database_url: "sqlite:///:memory:"
+    database_url: "sqlite:///./example/sample_data.db"
     read_only: true
     max_rows: 500
 
   - tool_name: soliplex_sql.tools.describe_table
-    database_url: "sqlite:///:memory:"
+    database_url: "sqlite:///./example/sample_data.db"
 
   - tool_name: soliplex_sql.tools.get_schema
-    database_url: "sqlite:///:memory:"
+    database_url: "sqlite:///./example/sample_data.db"
+
+  - tool_name: soliplex_sql.tools.sample_query
+    database_url: "sqlite:///./example/sample_data.db"
+    max_rows: 20
 
 suggestions:
   - "Show me this month's top selling products"
   - "What's our revenue trend?"
+  - "Who are our top customers?"
+  - "Which product categories perform best?"

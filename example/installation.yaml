@@ -23,6 +23,8 @@ secrets:
 environment:
   - name: "INSTALLATION_PATH"
     value: "file:."
+  - name: "OLLAMA_BASE_URL"
+    value: "http://bizon.local:11434"
 
 # Disable OIDC authentication for demo
 oidc_paths:
