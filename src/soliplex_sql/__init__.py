@@ -15,6 +15,9 @@ from soliplex_sql.config import SampleQueryConfig
 from soliplex_sql.config import SQLToolConfigBase
 from soliplex_sql.config import SQLToolSettings
 
+# Alias for backwards compatibility with PLAN examples
+SQLToolConfig = SQLToolConfigBase
+
 # Exceptions
 from soliplex_sql.exceptions import ConfigurationError
 from soliplex_sql.exceptions import DatabaseConnectionError
@@ -40,6 +43,7 @@ __all__ = [
     "ListTablesConfig",
     "QueryConfig",
     "QueryExecutionError",
+    "SQLToolConfig",
     "SQLToolConfigBase",
     "SQLToolSettings",
     "SampleQueryConfig",

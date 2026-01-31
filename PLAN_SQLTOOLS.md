@@ -144,18 +144,16 @@ Report findings in this format:
 - [x] Fix T1: Thread-safe `close_all()`
 - [x] Commit Phase 2.5 (`1254a48`)
 
-### Phase 3: Room Configuration Integration ⏳
-- [ ] Create example room_config.yaml
-- [ ] Document installation.yaml registration
-- [ ] Test per-room database configuration
-- [ ] Create example/ directory with working room
-- [ ] Test with actual Soliplex installation
-- [ ] Update README with room usage examples
-- [ ] **LLM Review: Source** - Use `mcp__gemini__read_files` with phase context (see "LLM Review Process" above)
-- [ ] **LLM Review: Tests** - Use `mcp__gemini__read_files` with phase context
-- [ ] Incorporate feedback fixes
-- [ ] Re-verify with Gemini
-- [ ] Commit Phase 3
+### Phase 3: Room Configuration Integration ✅
+- [x] Create example room_config.yaml
+- [x] Document installation.yaml registration
+- [x] Test per-room database configuration
+- [x] Create example/ directory with working room
+- [x] Test with actual Soliplex installation
+- [x] Update README with room usage examples
+- [x] **LLM Review: Source** - Gemini pro3 `read_files` (see FEEDBACK_SQLTOOLS.md)
+- [x] Incorporate feedback fixes (D1-D4: docs + SQLToolConfig alias)
+- [x] Commit Phase 3
 
 ### Phase 4: Polish & Release ⏳
 - [ ] Complete README.md documentation

@@ -1,0 +1,40 @@
+# Sales Database Room - Per-Room Database Configuration Example
+#
+# This demonstrates overriding database settings per-room.
+# Each room can connect to a different database.
+#
+# Using in-memory SQLite for demonstration. In production,
+# replace with your actual database URL.
+
+id: sales-db
+name: Sales Database
+description: Query the sales database
+
+agent:
+  model_name: qwen3-coder-tools:30b
+  system_prompt: |
+    You are a sales data analyst. Help users explore sales data.
+    The database contains orders, customers, and products.
+
+# Override database settings for this specific room
+# Using in-memory SQLite - replace with your actual DB URL
+tools:
+  - tool_name: soliplex_sql.tools.list_tables
+    database_url: "sqlite:///:memory:"
+    read_only: true
+    max_rows: 500
+
+  - tool_name: soliplex_sql.tools.query
+    database_url: "sqlite:///:memory:"
+    read_only: true
+    max_rows: 500
+
+  - tool_name: soliplex_sql.tools.describe_table
+    database_url: "sqlite:///:memory:"
+
+  - tool_name: soliplex_sql.tools.get_schema
+    database_url: "sqlite:///:memory:"
+
+suggestions:
+  - "Show me this month's top selling products"
+  - "What's our revenue trend?"

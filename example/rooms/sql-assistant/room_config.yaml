@@ -1,0 +1,55 @@
+# SQL Database Assistant Room Configuration
+#
+# This room provides AI-assisted SQL database exploration and querying.
+# Database connection is configured via environment variables.
+#
+# Required environment variables:
+#   SOLIPLEX_SQL_DATABASE_URL - Connection string
+#     Examples:
+#       sqlite:///:memory:        (in-memory SQLite)
+#       sqlite:///./data.db       (file-based SQLite)
+#       postgresql://user:pass@host/db  (PostgreSQL)
+#
+# Optional environment variables:
+#   SOLIPLEX_SQL_READ_ONLY    - Enforce read-only mode (default: true)
+#   SOLIPLEX_SQL_MAX_ROWS     - Max rows returned (default: 100)
+#   SOLIPLEX_SQL_QUERY_TIMEOUT - Query timeout seconds (default: 30.0)
+
+id: sql-assistant
+name: SQL Database Assistant
+description: Query and explore your database with AI assistance
+
+agent:
+  model_name: qwen3-coder-tools:30b
+  system_prompt: |
+    You are a helpful database assistant. You can:
+    - List and describe database tables
+    - Execute SQL queries
+    - Explain query plans
+    - Help users understand their data
+
+    Always use the SQL tools to interact with the database.
+    Be careful with data - the database may be in read-only mode.
+
+    When exploring a database:
+    1. First use list_tables to see available tables
+    2. Use describe_table to understand table structure
+    3. Use sample_query for quick data exploration
+    4. Use query for full queries (results limited by max_rows)
+    5. Use explain_query to analyze query performance
+
+# All SQL tools share configuration via environment variables
+tools:
+  - tool_name: soliplex_sql.tools.list_tables
+  - tool_name: soliplex_sql.tools.get_schema
+  - tool_name: soliplex_sql.tools.describe_table
+  - tool_name: soliplex_sql.tools.query
+  - tool_name: soliplex_sql.tools.explain_query
+  - tool_name: soliplex_sql.tools.sample_query
+
+suggestions:
+  - "What tables are in the database?"
+  - "Describe the users table"
+  - "Show me a sample of the orders data"
+  - "How many records are in each table?"
+  - "What are the relationships between tables?"

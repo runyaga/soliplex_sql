@@ -18,7 +18,12 @@ if TYPE_CHECKING:
 # SQL statements allowed in read-only mode
 # WITH is included for Common Table Expressions (CTEs)
 _READONLY_PREFIXES = (
-    "SELECT", "EXPLAIN", "PRAGMA", "SHOW", "DESCRIBE", "WITH"
+    "SELECT",
+    "EXPLAIN",
+    "PRAGMA",
+    "SHOW",
+    "DESCRIBE",
+    "WITH",
 )
 
 

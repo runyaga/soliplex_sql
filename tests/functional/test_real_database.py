@@ -14,7 +14,6 @@ from soliplex_sql.adapter import SoliplexSQLAdapter
 from soliplex_sql.exceptions import QueryExecutionError
 
 if TYPE_CHECKING:
-
     pass
 
 
@@ -67,9 +66,7 @@ class TestGetSchema:
         """Should include column information."""
         schema = await adapter.get_schema()
 
-        users_table = next(
-            t for t in schema["tables"] if t["name"] == "users"
-        )
+        users_table = next(t for t in schema["tables"] if t["name"] == "users")
         column_names = [c["name"] for c in users_table["columns"]]
 
         assert "id" in column_names
@@ -114,9 +111,7 @@ class TestDescribeTable:
 class TestQuery:
     """Tests for query with real database."""
 
-    async def test_simple_select(
-        self, adapter: SoliplexSQLAdapter
-    ) -> None:
+    async def test_simple_select(self, adapter: SoliplexSQLAdapter) -> None:
         """Should execute simple SELECT query."""
         result = await adapter.query("SELECT * FROM users")
 
@@ -128,18 +123,14 @@ class TestQuery:
         self, adapter: SoliplexSQLAdapter
     ) -> None:
         """Should return actual data from database."""
-        result = await adapter.query(
-            "SELECT name FROM users ORDER BY name"
-        )
+        result = await adapter.query("SELECT name FROM users ORDER BY name")
 
         names = [row[0] for row in result["rows"]]
         assert "Alice" in names
         assert "Bob" in names
         assert "Charlie" in names
 
-    async def test_query_with_where(
-        self, adapter: SoliplexSQLAdapter
-    ) -> None:
+    async def test_query_with_where(self, adapter: SoliplexSQLAdapter) -> None:
         """Should filter results with WHERE clause."""
         result = await adapter.query(
             "SELECT name FROM users WHERE name = 'Alice'"
@@ -148,9 +139,7 @@ class TestQuery:
         assert result["row_count"] == 1
         assert result["rows"][0][0] == "Alice"
 
-    async def test_query_with_join(
-        self, adapter: SoliplexSQLAdapter
-    ) -> None:
+    async def test_query_with_join(self, adapter: SoliplexSQLAdapter) -> None:
         """Should handle JOIN queries."""
         result = await adapter.query("""
             SELECT u.name, p.title
@@ -190,9 +179,7 @@ class TestExplainQuery:
         self, adapter: SoliplexSQLAdapter
     ) -> None:
         """Should return query execution plan."""
-        plan = await adapter.explain_query(
-            "SELECT * FROM users WHERE id = 1"
-        )
+        plan = await adapter.explain_query("SELECT * FROM users WHERE id = 1")
 
         assert isinstance(plan, str)
         assert len(plan) > 0
@@ -269,9 +256,7 @@ class TestReadOnlyMode:
         self, read_only_adapter: SoliplexSQLAdapter
     ) -> None:
         """EXPLAIN should work in read-only mode."""
-        plan = await read_only_adapter.explain_query(
-            "SELECT * FROM items"
-        )
+        plan = await read_only_adapter.explain_query("SELECT * FROM items")
         assert len(plan) > 0
 
     async def test_pragma_allowed_in_read_only(
