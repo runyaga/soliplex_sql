@@ -1,17 +1,16 @@
 """Tests for tool wrapper functions in tools.py.
 
 These tests verify the exported tool functions work correctly
-with RunContext and database operations.
+with tool_config injection and database operations.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
 
-import pytest
 import pytest_asyncio
 
+from soliplex_sql.adapter import SoliplexSQLAdapter
 from soliplex_sql.config import SQLToolConfig
 from soliplex_sql.tools import _adapter_cache
 from soliplex_sql.tools import describe_table
@@ -22,14 +21,14 @@ from soliplex_sql.tools import query
 from soliplex_sql.tools import sample_query
 
 if TYPE_CHECKING:
-    from sql_toolset_pydantic_ai import SQLDatabaseDeps
+    pass
 
 
 @pytest_asyncio.fixture
-async def tool_test_db() -> SQLDatabaseDeps:
-    """Create in-memory SQLite for tool function tests.
+async def tool_config_with_db() -> SQLToolConfig:
+    """Create SQLToolConfig with in-memory SQLite test database.
 
-    Returns SQLDatabaseDeps and registers in cache via config.
+    Creates a config and caches the adapter with test data.
     """
     from sql_toolset_pydantic_ai import SQLDatabaseDeps
     from sql_toolset_pydantic_ai import SQLiteDatabase
@@ -59,20 +58,7 @@ async def tool_test_db() -> SQLDatabaseDeps:
         query_timeout=30.0,
     )
 
-    yield deps
-
-    await backend.close()
-
-
-@pytest.fixture
-def mock_ctx_with_db(tool_test_db: SQLDatabaseDeps) -> MagicMock:
-    """Create mock RunContext with SQL config pointing to test db.
-
-    Note: This directly caches the adapter to avoid re-creating DB.
-    """
-    from soliplex_sql.adapter import SoliplexSQLAdapter
-
-    # Create config matching cached key
+    # Create config with unique database_url for caching
     config = SQLToolConfig(
         tool_name="soliplex_sql.tools.query",
         database_url="sqlite:///:memory:_test",
@@ -80,17 +66,14 @@ def mock_ctx_with_db(tool_test_db: SQLDatabaseDeps) -> MagicMock:
         max_rows=100,
     )
 
-    # Create adapter and cache it
-    adapter = SoliplexSQLAdapter(tool_test_db)
+    # Cache the adapter directly
+    adapter = SoliplexSQLAdapter(deps)
     cache_key = (config.database_url, config.read_only, config.max_rows)
     _adapter_cache[cache_key] = adapter
 
-    # Create mock context
-    ctx = MagicMock()
-    ctx.deps = MagicMock()
-    ctx.deps.tool_configs = {"query": config}
+    yield config
 
-    return ctx
+    await backend.close()
 
 
 class TestListTablesTool:
@@ -98,10 +81,10 @@ class TestListTablesTool:
 
     async def test_list_tables_returns_tables(
         self,
-        mock_ctx_with_db: MagicMock,
+        tool_config_with_db: SQLToolConfig,
     ) -> None:
         """list_tables tool should return table names."""
-        result = await list_tables(mock_ctx_with_db)
+        result = await list_tables(tool_config_with_db)
 
         assert isinstance(result, list)
         assert "products" in result
@@ -112,10 +95,10 @@ class TestGetSchemaTool:
 
     async def test_get_schema_returns_dict(
         self,
-        mock_ctx_with_db: MagicMock,
+        tool_config_with_db: SQLToolConfig,
     ) -> None:
         """get_schema tool should return schema dict."""
-        result = await get_schema(mock_ctx_with_db)
+        result = await get_schema(tool_config_with_db)
 
         assert isinstance(result, dict)
         assert "tables" in result
@@ -126,10 +109,10 @@ class TestDescribeTableTool:
 
     async def test_describe_table_returns_info(
         self,
-        mock_ctx_with_db: MagicMock,
+        tool_config_with_db: SQLToolConfig,
     ) -> None:
         """describe_table tool should return table info."""
-        result = await describe_table(mock_ctx_with_db, "products")
+        result = await describe_table(tool_config_with_db, "products")
 
         assert result is not None
         assert result["name"] == "products"
@@ -137,10 +120,10 @@ class TestDescribeTableTool:
 
     async def test_describe_table_nonexistent(
         self,
-        mock_ctx_with_db: MagicMock,
+        tool_config_with_db: SQLToolConfig,
     ) -> None:
         """describe_table tool should return None for nonexistent."""
-        result = await describe_table(mock_ctx_with_db, "nonexistent")
+        result = await describe_table(tool_config_with_db, "nonexistent")
 
         assert result is None
 
@@ -150,11 +133,11 @@ class TestQueryTool:
 
     async def test_query_returns_results(
         self,
-        mock_ctx_with_db: MagicMock,
+        tool_config_with_db: SQLToolConfig,
     ) -> None:
         """query tool should execute and return results."""
         result = await query(
-            mock_ctx_with_db,
+            tool_config_with_db,
             "SELECT name, price FROM products ORDER BY name",
         )
 
@@ -164,11 +147,11 @@ class TestQueryTool:
 
     async def test_query_with_max_rows(
         self,
-        mock_ctx_with_db: MagicMock,
+        tool_config_with_db: SQLToolConfig,
     ) -> None:
         """query tool should respect max_rows parameter."""
         result = await query(
-            mock_ctx_with_db,
+            tool_config_with_db,
             "SELECT * FROM products",
             max_rows=1,
         )
@@ -182,11 +165,11 @@ class TestExplainQueryTool:
 
     async def test_explain_query_returns_plan(
         self,
-        mock_ctx_with_db: MagicMock,
+        tool_config_with_db: SQLToolConfig,
     ) -> None:
         """explain_query tool should return execution plan."""
         result = await explain_query(
-            mock_ctx_with_db,
+            tool_config_with_db,
             "SELECT * FROM products WHERE id = 1",
         )
 
@@ -199,11 +182,11 @@ class TestSampleQueryTool:
 
     async def test_sample_query_limits_results(
         self,
-        mock_ctx_with_db: MagicMock,
+        tool_config_with_db: SQLToolConfig,
     ) -> None:
         """sample_query tool should limit results."""
         result = await sample_query(
-            mock_ctx_with_db,
+            tool_config_with_db,
             "SELECT * FROM products",
             limit=2,
         )
@@ -212,11 +195,11 @@ class TestSampleQueryTool:
 
     async def test_sample_query_default_limit(
         self,
-        mock_ctx_with_db: MagicMock,
+        tool_config_with_db: SQLToolConfig,
     ) -> None:
         """sample_query tool should use default limit."""
         result = await sample_query(
-            mock_ctx_with_db,
+            tool_config_with_db,
             "SELECT * FROM products",
         )
 

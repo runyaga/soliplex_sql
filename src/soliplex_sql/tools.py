@@ -1,95 +1,57 @@
 """Soliplex-compatible tool functions.
 
-These tools follow pydantic-ai idioms:
-- RunContext dependency injection
+These tools use Soliplex's native tool_config injection:
+- tool_config: SQLToolConfig automatically injected by Soliplex
 - Async tool functions
 - Type-safe return values
 """
 
 from __future__ import annotations
 
-import threading
+import asyncio
 from typing import Any
-
-from pydantic_ai import RunContext
 
 from soliplex_sql.adapter import SoliplexSQLAdapter
 from soliplex_sql.config import SQLToolConfig
-from soliplex_sql.config import SQLToolSettings
 
 # Module-level cache: config_tuple -> adapter (supports concurrent rooms)
 # Using tuple as key (not hash) for stability across processes
 _adapter_cache: dict[tuple, SoliplexSQLAdapter] = {}
-_adapter_cache_lock = threading.Lock()
+_adapter_lock = asyncio.Lock()
 
 
-def _get_config_from_context(ctx: Any) -> SQLToolConfig | None:
-    """Extract SQL config from context if available.
-
-    Args:
-        ctx: RunContext with deps
-
-    Returns:
-        SQLToolConfig or None
-    """
-    if not hasattr(ctx, "deps"):
-        return None
-
-    deps = ctx.deps
-    if not hasattr(deps, "tool_configs"):
-        return None
-
-    tool_configs = deps.tool_configs
-
-    # Look for any SQL tool config (instance of SQLToolConfig)
-    for config in tool_configs.values():
-        if isinstance(config, SQLToolConfig):
-            return config
-
-    return None
-
-
-def _get_adapter(ctx: Any) -> SoliplexSQLAdapter:
-    """Get or create SQL adapter from context.
+async def _get_adapter(config: SQLToolConfig) -> SoliplexSQLAdapter:
+    """Get or create SQL adapter from config.
 
     Uses dict-based caching to support multiple concurrent database
     connections (e.g., Room A -> Sales DB, Room B -> HR DB).
     Critical for PostgreSQL connection pooling performance.
 
     Args:
-        ctx: RunContext with deps
+        config: SQLToolConfig with database settings
 
     Returns:
         SoliplexSQLAdapter instance (cached)
     """
-    tool_config = _get_config_from_context(ctx)
-
-    if tool_config is None:
-        # Fall back to environment-based configuration
-        settings = SQLToolSettings()
-        tool_config = SQLToolConfig(
-            tool_name="soliplex_sql.tools.fallback",
-            database_url=settings.database_url,
-            read_only=settings.read_only,
-            max_rows=settings.max_rows,
-            query_timeout=settings.query_timeout,
-        )
-
     # Cache key based on connection parameters (tuple, not hash)
     cache_key = (
-        tool_config.database_url,
-        tool_config.read_only,
-        tool_config.max_rows,
+        config.database_url,
+        config.read_only,
+        config.max_rows,
     )
 
-    # Thread-safe cache access
-    with _adapter_cache_lock:
-        # Check cache dict (supports multiple DBs concurrently)
+    # Fast path: check cache without lock
+    if cache_key in _adapter_cache:
+        return _adapter_cache[cache_key]
+
+    # Slow path: acquire async lock and create adapter
+    async with _adapter_lock:
+        # Double-check after acquiring lock
         if cache_key in _adapter_cache:
             return _adapter_cache[cache_key]
 
         # Create new adapter and cache it
-        sql_deps = tool_config.create_deps()
+        sql_deps = config.create_deps()
         adapter = SoliplexSQLAdapter(sql_deps)
         _adapter_cache[cache_key] = adapter
 
@@ -97,104 +59,104 @@ def _get_adapter(ctx: Any) -> SoliplexSQLAdapter:
 
 
 async def list_tables(
-    ctx: RunContext[Any],
+    tool_config: SQLToolConfig,
 ) -> list[str]:
     """List all tables in the database.
 
     Args:
-        ctx: PydanticAI RunContext
+        tool_config: SQLToolConfig (injected by Soliplex)
 
     Returns:
         List of table names
     """
-    adapter = _get_adapter(ctx)
+    adapter = await _get_adapter(tool_config)
     return await adapter.list_tables()
 
 
 async def get_schema(
-    ctx: RunContext[Any],
+    tool_config: SQLToolConfig,
 ) -> dict[str, Any]:
     """Get database schema overview.
 
     Args:
-        ctx: PydanticAI RunContext
+        tool_config: SQLToolConfig (injected by Soliplex)
 
     Returns:
         Schema information with tables, columns, and row counts
     """
-    adapter = _get_adapter(ctx)
+    adapter = await _get_adapter(tool_config)
     return await adapter.get_schema()
 
 
 async def describe_table(
-    ctx: RunContext[Any],
+    tool_config: SQLToolConfig,
     table_name: str,
 ) -> dict[str, Any] | None:
     """Get detailed information about a specific table.
 
     Args:
-        ctx: PydanticAI RunContext
+        tool_config: SQLToolConfig (injected by Soliplex)
         table_name: Name of the table to describe
 
     Returns:
         Table information including columns, types, constraints
     """
-    adapter = _get_adapter(ctx)
+    adapter = await _get_adapter(tool_config)
     return await adapter.describe_table(table_name)
 
 
 async def query(
-    ctx: RunContext[Any],
+    tool_config: SQLToolConfig,
     sql_query: str,
     max_rows: int | None = None,
 ) -> dict[str, Any]:
     """Execute a SQL query and return results.
 
     Args:
-        ctx: PydanticAI RunContext
+        tool_config: SQLToolConfig (injected by Soliplex)
         sql_query: SQL query to execute
         max_rows: Maximum rows to return (optional)
 
     Returns:
         Query results with columns, rows, and metadata
     """
-    adapter = _get_adapter(ctx)
+    adapter = await _get_adapter(tool_config)
     return await adapter.query(sql_query, max_rows)
 
 
 async def explain_query(
-    ctx: RunContext[Any],
+    tool_config: SQLToolConfig,
     sql_query: str,
 ) -> str:
     """Get the execution plan for a SQL query.
 
     Args:
-        ctx: PydanticAI RunContext
+        tool_config: SQLToolConfig (injected by Soliplex)
         sql_query: SQL query to analyze
 
     Returns:
         Query execution plan
     """
-    adapter = _get_adapter(ctx)
+    adapter = await _get_adapter(tool_config)
     return await adapter.explain_query(sql_query)
 
 
 async def sample_query(
-    ctx: RunContext[Any],
+    tool_config: SQLToolConfig,
     sql_query: str,
     limit: int = 5,
 ) -> dict[str, Any]:
     """Execute a sample query for quick data exploration.
 
     Args:
-        ctx: PydanticAI RunContext
+        tool_config: SQLToolConfig (injected by Soliplex)
         sql_query: SQL query to execute
         limit: Maximum rows (default: 5)
 
     Returns:
         Sample query results
     """
-    adapter = _get_adapter(ctx)
+    adapter = await _get_adapter(tool_config)
     return await adapter.sample_query(sql_query, limit)
 
 
@@ -202,10 +164,9 @@ async def close_all() -> None:
     """Close all cached database connections.
 
     Call this on application shutdown for graceful cleanup.
-    Thread-safe: acquires lock before accessing cache.
+    Async-safe: acquires async lock before accessing cache.
     """
-    # Thread-safe: copy adapters and clear under lock
-    with _adapter_cache_lock:
+    async with _adapter_lock:
         adapters = list(_adapter_cache.values())
         _adapter_cache.clear()
 

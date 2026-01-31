@@ -129,9 +129,11 @@ class TestSQLToolConfig:
         assert tool_func is list_tables
 
     def test_tool_requires_property(self) -> None:
-        """Tool requires should return 'fastapi_context'."""
+        """Tool requires should return 'tool_config' for injection."""
+        from soliplex.config import ToolRequires
+
         config = SQLToolConfig(tool_name="soliplex_sql.tools.query")
-        assert config.tool_requires == "fastapi_context"
+        assert config.tool_requires == ToolRequires.TOOL_CONFIG
 
     def test_config_requires_tool_name(self) -> None:
         """SQLToolConfig requires tool_name (inherited from ToolConfig)."""
