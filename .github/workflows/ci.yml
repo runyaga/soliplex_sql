@@ -94,7 +94,7 @@ jobs:
         run: |
           pytest tests/functional/test_real_database.py \
             tests/functional/test_tool_wrappers.py \
-            -v --tb=short
+            -v --tb=short --no-cov
 
   build:
     name: Build Package
