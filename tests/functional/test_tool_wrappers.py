@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 import pytest
 import pytest_asyncio
 
-from soliplex_sql.config import SQLToolConfigBase
+from soliplex_sql.config import SQLToolConfig
 from soliplex_sql.tools import _adapter_cache
 from soliplex_sql.tools import describe_table
 from soliplex_sql.tools import explain_query
@@ -73,7 +73,7 @@ def mock_ctx_with_db(tool_test_db: SQLDatabaseDeps) -> MagicMock:
     from soliplex_sql.adapter import SoliplexSQLAdapter
 
     # Create config matching cached key
-    config = SQLToolConfigBase(
+    config = SQLToolConfig(
         tool_name="soliplex_sql.tools.query",
         database_url="sqlite:///:memory:_test",
         read_only=False,

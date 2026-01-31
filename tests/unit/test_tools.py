@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from soliplex_sql.config import SQLToolConfigBase
+from soliplex_sql.config import SQLToolConfig
 from soliplex_sql.tools import _adapter_cache
 from soliplex_sql.tools import _get_adapter
 from soliplex_sql.tools import _get_config_from_context
@@ -35,12 +35,10 @@ class TestGetConfigFromContext:
 
     def test_returns_config_with_sql_kind(self) -> None:
         """Should return config matching SQL kind."""
-        from soliplex_sql.config import ListTablesConfig
-
-        config = ListTablesConfig()  # Has default tool_name
+        config = SQLToolConfig(tool_name="soliplex_sql.tools.list_tables")
         ctx = MagicMock()
-        # Use the kind derived from tool_name ('list_tables')
-        ctx.deps.tool_configs = {"list_tables": config}
+        # Use the kind 'sql' (now all SQL tools have kind='sql')
+        ctx.deps.tool_configs = {"sql": config}
 
         result = _get_config_from_context(ctx)
 
@@ -64,7 +62,7 @@ class TestGetAdapter:
         ctx.deps.tool_configs = {}
 
         with patch(
-            "soliplex_sql.tools.SQLToolConfigBase.create_deps"
+            "soliplex_sql.tools.SQLToolConfig.create_deps"
         ) as mock_create:
             mock_deps = MagicMock()
             mock_deps.database = MagicMock()
@@ -82,7 +80,7 @@ class TestGetAdapter:
         ctx.deps.tool_configs = {}
 
         with patch(
-            "soliplex_sql.tools.SQLToolConfigBase.create_deps"
+            "soliplex_sql.tools.SQLToolConfig.create_deps"
         ) as mock_create:
             mock_deps = MagicMock()
             mock_deps.database = MagicMock()
@@ -100,13 +98,13 @@ class TestGetAdapter:
 
     def test_different_configs_different_adapters(self) -> None:
         """Should create different adapters for different configs."""
-        config1 = SQLToolConfigBase(
+        config1 = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///db1.db",
             read_only=True,
             max_rows=100,
         )
-        config2 = SQLToolConfigBase(
+        config2 = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///db2.db",
             read_only=True,
@@ -119,7 +117,7 @@ class TestGetAdapter:
         ctx2 = MagicMock()
         ctx2.deps.tool_configs = {"query": config2}
 
-        with patch.object(SQLToolConfigBase, "create_deps") as mock_create:
+        with patch.object(SQLToolConfig, "create_deps") as mock_create:
             mock_deps = MagicMock()
             mock_deps.database = MagicMock()
             mock_deps.read_only = True

@@ -8,7 +8,7 @@ import pytest
 import pytest_asyncio
 
 from soliplex_sql.adapter import SoliplexSQLAdapter
-from soliplex_sql.config import SQLToolConfigBase
+from soliplex_sql.config import SQLToolConfig
 from soliplex_sql.tools import _adapter_cache
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ async def real_db() -> SQLDatabaseDeps:
     Yields:
         SQLDatabaseDeps configured for the test database
     """
-    config = SQLToolConfigBase(
+    config = SQLToolConfig(
         tool_name="soliplex_sql.tools.query",
         database_url="sqlite:///:memory:",
         read_only=False,

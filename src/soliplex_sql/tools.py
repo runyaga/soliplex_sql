@@ -14,7 +14,7 @@ from typing import Any
 from pydantic_ai import RunContext
 
 from soliplex_sql.adapter import SoliplexSQLAdapter
-from soliplex_sql.config import SQLToolConfigBase
+from soliplex_sql.config import SQLToolConfig
 from soliplex_sql.config import SQLToolSettings
 
 # Module-level cache: config_tuple -> adapter (supports concurrent rooms)
@@ -23,14 +23,14 @@ _adapter_cache: dict[tuple, SoliplexSQLAdapter] = {}
 _adapter_cache_lock = threading.Lock()
 
 
-def _get_config_from_context(ctx: Any) -> SQLToolConfigBase | None:
+def _get_config_from_context(ctx: Any) -> SQLToolConfig | None:
     """Extract SQL config from context if available.
 
     Args:
         ctx: RunContext with deps
 
     Returns:
-        SQLToolConfigBase or None
+        SQLToolConfig or None
     """
     if not hasattr(ctx, "deps"):
         return None
@@ -41,9 +41,9 @@ def _get_config_from_context(ctx: Any) -> SQLToolConfigBase | None:
 
     tool_configs = deps.tool_configs
 
-    # Look for any SQL tool config (instance of SQLToolConfigBase)
+    # Look for any SQL tool config (instance of SQLToolConfig)
     for config in tool_configs.values():
-        if isinstance(config, SQLToolConfigBase):
+        if isinstance(config, SQLToolConfig):
             return config
 
     return None
@@ -67,7 +67,7 @@ def _get_adapter(ctx: Any) -> SoliplexSQLAdapter:
     if tool_config is None:
         # Fall back to environment-based configuration
         settings = SQLToolSettings()
-        tool_config = SQLToolConfigBase(
+        tool_config = SQLToolConfig(
             tool_name="soliplex_sql.tools.fallback",
             database_url=settings.database_url,
             read_only=settings.read_only,

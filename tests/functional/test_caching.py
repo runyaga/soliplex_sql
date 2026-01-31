@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
-from soliplex_sql.config import SQLToolConfigBase
+from soliplex_sql.config import SQLToolConfig
 from soliplex_sql.tools import _adapter_cache
 from soliplex_sql.tools import _get_adapter
 
@@ -18,7 +18,7 @@ class TestAdapterCaching:
 
     def test_same_config_returns_cached_adapter(self) -> None:
         """Same config should return the same cached adapter."""
-        config = SQLToolConfigBase(
+        config = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///test1.db",
             read_only=True,
@@ -38,13 +38,13 @@ class TestAdapterCaching:
 
     def test_different_database_url_creates_new_adapter(self) -> None:
         """Different database URL should create new adapter."""
-        config1 = SQLToolConfigBase(
+        config1 = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///db1.db",
             read_only=True,
             max_rows=100,
         )
-        config2 = SQLToolConfigBase(
+        config2 = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///db2.db",
             read_only=True,
@@ -65,13 +65,13 @@ class TestAdapterCaching:
 
     def test_different_read_only_creates_new_adapter(self) -> None:
         """Different read_only setting should create new adapter."""
-        config1 = SQLToolConfigBase(
+        config1 = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///same.db",
             read_only=True,
             max_rows=100,
         )
-        config2 = SQLToolConfigBase(
+        config2 = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///same.db",
             read_only=False,
@@ -91,13 +91,13 @@ class TestAdapterCaching:
 
     def test_different_max_rows_creates_new_adapter(self) -> None:
         """Different max_rows should create new adapter."""
-        config1 = SQLToolConfigBase(
+        config1 = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///same.db",
             read_only=True,
             max_rows=100,
         )
-        config2 = SQLToolConfigBase(
+        config2 = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///same.db",
             read_only=True,
@@ -117,7 +117,7 @@ class TestAdapterCaching:
 
     def test_cache_key_uses_tuple_not_hash(self) -> None:
         """Cache should use tuple as key, not hash."""
-        config = SQLToolConfigBase(
+        config = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///test.db",
             read_only=True,
@@ -162,7 +162,7 @@ class TestConcurrentRoomSupport:
     def test_multiple_rooms_multiple_databases(self) -> None:
         """Should support multiple concurrent databases for rooms."""
         # Room A: Sales database
-        sales_config = SQLToolConfigBase(
+        sales_config = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///sales.db",
             read_only=True,
@@ -170,7 +170,7 @@ class TestConcurrentRoomSupport:
         )
 
         # Room B: HR database
-        hr_config = SQLToolConfigBase(
+        hr_config = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///hr.db",
             read_only=True,
@@ -178,7 +178,7 @@ class TestConcurrentRoomSupport:
         )
 
         # Room C: Finance database
-        finance_config = SQLToolConfigBase(
+        finance_config = SQLToolConfig(
             tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///finance.db",
             read_only=True,

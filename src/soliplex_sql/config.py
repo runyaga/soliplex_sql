@@ -69,36 +69,44 @@ def _create_backend(
         raise UnsupportedDatabaseError(msg)
 
 
-# Load environment variables at module level (fallback defaults)
-_env_settings = SQLToolSettings()
+def _get_env_settings() -> SQLToolSettings:
+    """Lazy-load environment settings.
+
+    Returns:
+        SQLToolSettings instance with values from environment.
+    """
+    return SQLToolSettings()
 
 
 @dataclasses.dataclass
-class SQLToolConfigBase(ToolConfig):
-    """Base configuration for SQL tools.
+class SQLToolConfig(ToolConfig):
+    """Configuration for SQL tools.
 
     Inherits from soliplex.config.ToolConfig for full Soliplex integration.
+    Single config class for all SQL tools - tool_name comes from room config.
 
-    Soliplex requires 1:1 mapping between tool_name and config class.
-    Each tool gets a subclass with its specific tool_name.
-
-    Defaults come from environment variables via SQLToolSettings.
+    Defaults come from environment variables via SQLToolSettings (lazy loaded).
     Room configs can override any setting.
     """
 
-    # SQL-specific fields with env var defaults
+    # SQL-specific fields with lazy env var defaults
     database_url: str = dataclasses.field(
-        default_factory=lambda: _env_settings.database_url
+        default_factory=lambda: _get_env_settings().database_url
     )
     read_only: bool = dataclasses.field(
-        default_factory=lambda: _env_settings.read_only
+        default_factory=lambda: _get_env_settings().read_only
     )
     max_rows: int = dataclasses.field(
-        default_factory=lambda: _env_settings.max_rows
+        default_factory=lambda: _get_env_settings().max_rows
     )
     query_timeout: float = dataclasses.field(
-        default_factory=lambda: _env_settings.query_timeout
+        default_factory=lambda: _get_env_settings().query_timeout
     )
+
+    @property
+    def kind(self) -> str:
+        """Return 'sql' as the config kind."""
+        return "sql"
 
     @classmethod
     def from_yaml(
@@ -106,18 +114,19 @@ class SQLToolConfigBase(ToolConfig):
         installation_config: Any,
         config_path: pathlib.Path,
         config: dict[str, Any],
-    ) -> SQLToolConfigBase:
-        """Create from Soliplex YAML configuration."""
-        # Extract SQL-specific fields, using env defaults
+    ) -> SQLToolConfig:
+        """Create from Soliplex YAML configuration.
+
+        Uses lazy loading for env settings to support testing.
+        """
+        env_settings = _get_env_settings()
         return cls(
-            tool_name=config.get("tool_name", getattr(cls, "tool_name", "")),
-            database_url=config.get(
-                "database_url", _env_settings.database_url
-            ),
-            read_only=config.get("read_only", _env_settings.read_only),
-            max_rows=config.get("max_rows", _env_settings.max_rows),
+            tool_name=config.get("tool_name", ""),
+            database_url=config.get("database_url", env_settings.database_url),
+            read_only=config.get("read_only", env_settings.read_only),
+            max_rows=config.get("max_rows", env_settings.max_rows),
             query_timeout=config.get(
-                "query_timeout", _env_settings.query_timeout
+                "query_timeout", env_settings.query_timeout
             ),
             _installation_config=installation_config,
             _config_path=config_path,
@@ -134,45 +143,3 @@ class SQLToolConfigBase(ToolConfig):
             max_rows=self.max_rows,
             query_timeout=self.query_timeout,
         )
-
-
-@dataclasses.dataclass
-class ListTablesConfig(SQLToolConfigBase):
-    """Config for list_tables tool."""
-
-    tool_name: str = "soliplex_sql.tools.list_tables"
-
-
-@dataclasses.dataclass
-class GetSchemaConfig(SQLToolConfigBase):
-    """Config for get_schema tool."""
-
-    tool_name: str = "soliplex_sql.tools.get_schema"
-
-
-@dataclasses.dataclass
-class DescribeTableConfig(SQLToolConfigBase):
-    """Config for describe_table tool."""
-
-    tool_name: str = "soliplex_sql.tools.describe_table"
-
-
-@dataclasses.dataclass
-class QueryConfig(SQLToolConfigBase):
-    """Config for query tool."""
-
-    tool_name: str = "soliplex_sql.tools.query"
-
-
-@dataclasses.dataclass
-class ExplainQueryConfig(SQLToolConfigBase):
-    """Config for explain_query tool."""
-
-    tool_name: str = "soliplex_sql.tools.explain_query"
-
-
-@dataclasses.dataclass
-class SampleQueryConfig(SQLToolConfigBase):
-    """Config for sample_query tool."""
-
-    tool_name: str = "soliplex_sql.tools.sample_query"

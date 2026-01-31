@@ -6,17 +6,8 @@ Integrates sql-toolset-pydantic-ai into the Soliplex framework.
 from __future__ import annotations
 
 # Configuration
-from soliplex_sql.config import DescribeTableConfig
-from soliplex_sql.config import ExplainQueryConfig
-from soliplex_sql.config import GetSchemaConfig
-from soliplex_sql.config import ListTablesConfig
-from soliplex_sql.config import QueryConfig
-from soliplex_sql.config import SampleQueryConfig
-from soliplex_sql.config import SQLToolConfigBase
+from soliplex_sql.config import SQLToolConfig
 from soliplex_sql.config import SQLToolSettings
-
-# Alias for backwards compatibility with PLAN examples
-SQLToolConfig = SQLToolConfigBase
 
 # Exceptions
 from soliplex_sql.exceptions import ConfigurationError
@@ -37,16 +28,9 @@ from soliplex_sql.tools import sample_query
 __all__ = [
     "ConfigurationError",
     "DatabaseConnectionError",
-    "DescribeTableConfig",
-    "ExplainQueryConfig",
-    "GetSchemaConfig",
-    "ListTablesConfig",
-    "QueryConfig",
     "QueryExecutionError",
     "SQLToolConfig",
-    "SQLToolConfigBase",
     "SQLToolSettings",
-    "SampleQueryConfig",
     "SoliplexSqlError",
     "UnsupportedDatabaseError",
     "close_all",
