@@ -12,6 +12,7 @@ from typing import Any
 
 from pydantic_settings import BaseSettings
 from pydantic_settings import SettingsConfigDict
+from soliplex.config import ToolConfig
 
 from soliplex_sql.exceptions import UnsupportedDatabaseError
 
@@ -73,8 +74,10 @@ _env_settings = SQLToolSettings()
 
 
 @dataclasses.dataclass
-class SQLToolConfigBase:
+class SQLToolConfigBase(ToolConfig):
     """Base configuration for SQL tools.
+
+    Inherits from soliplex.config.ToolConfig for full Soliplex integration.
 
     Soliplex requires 1:1 mapping between tool_name and config class.
     Each tool gets a subclass with its specific tool_name.
@@ -83,6 +86,7 @@ class SQLToolConfigBase:
     Room configs can override any setting.
     """
 
+    # SQL-specific fields with env var defaults
     database_url: str = dataclasses.field(
         default_factory=lambda: _env_settings.database_url
     )
@@ -96,13 +100,6 @@ class SQLToolConfigBase:
         default_factory=lambda: _env_settings.query_timeout
     )
 
-    agui_feature_names: tuple[str, ...] = ()
-
-    _installation_config: Any = dataclasses.field(default=None, repr=False)
-    _config_path: pathlib.Path | None = dataclasses.field(
-        default=None, repr=False
-    )
-
     @classmethod
     def from_yaml(
         cls,
@@ -111,7 +108,9 @@ class SQLToolConfigBase:
         config: dict[str, Any],
     ) -> SQLToolConfigBase:
         """Create from Soliplex YAML configuration."""
+        # Extract SQL-specific fields, using env defaults
         return cls(
+            tool_name=config.get("tool_name", getattr(cls, "tool_name", "")),
             database_url=config.get(
                 "database_url", _env_settings.database_url
             ),
@@ -123,32 +122,6 @@ class SQLToolConfigBase:
             _installation_config=installation_config,
             _config_path=config_path,
         )
-
-    @property
-    def kind(self) -> str:
-        """Tool kind identifier. Override in subclasses for unique kinds."""
-        return "sql"
-
-    @property
-    def tool(self) -> Any:
-        """Load the tool function associated with this config.
-
-        Required by Soliplex's tool loader for registration.
-        """
-        import importlib
-
-        if not hasattr(self, "tool_name"):
-            msg = "Subclass must define tool_name"
-            raise AttributeError(msg)
-
-        module_name, func_name = self.tool_name.rsplit(".", 1)
-        module = importlib.import_module(module_name)
-        return getattr(module, func_name)
-
-    @property
-    def tool_requires(self) -> str:
-        """Return context requirement for Soliplex tool binding."""
-        return "fastapi_context"
 
     def create_deps(self) -> SQLDatabaseDeps:
         """Create SQLDatabaseDeps from this configuration."""
@@ -169,22 +142,12 @@ class ListTablesConfig(SQLToolConfigBase):
 
     tool_name: str = "soliplex_sql.tools.list_tables"
 
-    @property
-    def kind(self) -> str:
-        """Unique kind for list_tables tool."""
-        return "sql_list_tables"
-
 
 @dataclasses.dataclass
 class GetSchemaConfig(SQLToolConfigBase):
     """Config for get_schema tool."""
 
     tool_name: str = "soliplex_sql.tools.get_schema"
-
-    @property
-    def kind(self) -> str:
-        """Unique kind for get_schema tool."""
-        return "sql_get_schema"
 
 
 @dataclasses.dataclass
@@ -193,22 +156,12 @@ class DescribeTableConfig(SQLToolConfigBase):
 
     tool_name: str = "soliplex_sql.tools.describe_table"
 
-    @property
-    def kind(self) -> str:
-        """Unique kind for describe_table tool."""
-        return "sql_describe_table"
-
 
 @dataclasses.dataclass
 class QueryConfig(SQLToolConfigBase):
     """Config for query tool."""
 
     tool_name: str = "soliplex_sql.tools.query"
-
-    @property
-    def kind(self) -> str:
-        """Unique kind for query tool."""
-        return "sql_query"
 
 
 @dataclasses.dataclass
@@ -217,19 +170,9 @@ class ExplainQueryConfig(SQLToolConfigBase):
 
     tool_name: str = "soliplex_sql.tools.explain_query"
 
-    @property
-    def kind(self) -> str:
-        """Unique kind for explain_query tool."""
-        return "sql_explain_query"
-
 
 @dataclasses.dataclass
 class SampleQueryConfig(SQLToolConfigBase):
     """Config for sample_query tool."""
 
     tool_name: str = "soliplex_sql.tools.sample_query"
-
-    @property
-    def kind(self) -> str:
-        """Unique kind for sample_query tool."""
-        return "sql_sample_query"

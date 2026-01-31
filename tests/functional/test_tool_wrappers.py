@@ -74,6 +74,7 @@ def mock_ctx_with_db(tool_test_db: SQLDatabaseDeps) -> MagicMock:
 
     # Create config matching cached key
     config = SQLToolConfigBase(
+        tool_name="soliplex_sql.tools.query",
         database_url="sqlite:///:memory:_test",
         read_only=False,
         max_rows=100,
@@ -87,7 +88,7 @@ def mock_ctx_with_db(tool_test_db: SQLDatabaseDeps) -> MagicMock:
     # Create mock context
     ctx = MagicMock()
     ctx.deps = MagicMock()
-    ctx.deps.tool_configs = {"sql": config}
+    ctx.deps.tool_configs = {"query": config}
 
     return ctx
 

@@ -27,6 +27,7 @@ async def real_db() -> SQLDatabaseDeps:
         SQLDatabaseDeps configured for the test database
     """
     config = SQLToolConfigBase(
+        tool_name="soliplex_sql.tools.query",
         database_url="sqlite:///:memory:",
         read_only=False,
         max_rows=100,

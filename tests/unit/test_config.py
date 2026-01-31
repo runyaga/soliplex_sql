@@ -67,8 +67,12 @@ class TestSQLToolConfigBase:
     """Tests for base configuration class."""
 
     def test_default_values_from_env(self) -> None:
-        """Defaults should come from environment settings."""
-        config = SQLToolConfigBase()
+        """Defaults should come from environment settings.
+
+        Note: SQLToolConfigBase now requires tool_name (inherited from
+        ToolConfig), so we use ListTablesConfig which has a default tool_name.
+        """
+        config = ListTablesConfig()
 
         # Should match SQLToolSettings defaults
         assert config.read_only is True
@@ -76,13 +80,17 @@ class TestSQLToolConfigBase:
         assert config.query_timeout == 30.0
 
     def test_kind_property(self) -> None:
-        """Kind should be 'sql'."""
-        config = SQLToolConfigBase()
-        assert config.kind == "sql"
+        """Kind is derived from tool_name by ToolConfig.
+
+        ToolConfig.kind extracts the last part of tool_name after the '.'.
+        E.g., 'soliplex_sql.tools.list_tables' -> 'list_tables'
+        """
+        config = ListTablesConfig()
+        assert config.kind == "list_tables"
 
     def test_from_yaml(self) -> None:
         """Should create from YAML config dict."""
-        config = SQLToolConfigBase.from_yaml(
+        config = ListTablesConfig.from_yaml(
             installation_config=None,
             config_path=None,
             config={
@@ -98,7 +106,7 @@ class TestSQLToolConfigBase:
 
     def test_from_yaml_uses_env_defaults(self) -> None:
         """YAML with missing fields should use env defaults."""
-        config = SQLToolConfigBase.from_yaml(
+        config = ListTablesConfig.from_yaml(
             installation_config=None,
             config_path=None,
             config={},
@@ -110,46 +118,50 @@ class TestSQLToolConfigBase:
 
 
 class TestPerToolConfigs:
-    """Tests for per-tool configuration classes."""
+    """Tests for per-tool configuration classes.
+
+    Note: kind is derived from tool_name by ToolConfig parent class.
+    E.g., 'soliplex_sql.tools.list_tables' -> 'list_tables'
+    """
 
     def test_list_tables_config_tool_name(self) -> None:
         """ListTablesConfig should have correct tool_name and unique kind."""
         config = ListTablesConfig()
         assert config.tool_name == "soliplex_sql.tools.list_tables"
-        assert config.kind == "sql_list_tables"
+        assert config.kind == "list_tables"
 
     def test_query_config_tool_name(self) -> None:
         """QueryConfig should have correct tool_name and unique kind."""
         config = QueryConfig()
         assert config.tool_name == "soliplex_sql.tools.query"
-        assert config.kind == "sql_query"
+        assert config.kind == "query"
 
     def test_describe_table_config_tool_name(self) -> None:
         """DescribeTableConfig has correct tool_name and unique kind."""
         config = DescribeTableConfig()
         assert config.tool_name == "soliplex_sql.tools.describe_table"
-        assert config.kind == "sql_describe_table"
+        assert config.kind == "describe_table"
 
     def test_get_schema_config(self) -> None:
         """GetSchemaConfig should have correct tool_name and kind."""
         config = GetSchemaConfig()
         assert config.tool_name == "soliplex_sql.tools.get_schema"
-        assert config.kind == "sql_get_schema"
+        assert config.kind == "get_schema"
 
     def test_explain_query_config(self) -> None:
         """ExplainQueryConfig should have correct tool_name and kind."""
         config = ExplainQueryConfig()
         assert config.tool_name == "soliplex_sql.tools.explain_query"
-        assert config.kind == "sql_explain_query"
+        assert config.kind == "explain_query"
 
     def test_sample_query_config(self) -> None:
         """SampleQueryConfig should have correct tool_name and kind."""
         config = SampleQueryConfig()
         assert config.tool_name == "soliplex_sql.tools.sample_query"
-        assert config.kind == "sql_sample_query"
+        assert config.kind == "sample_query"
 
     def test_configs_have_unique_kinds(self) -> None:
-        """All SQL configs should have unique kinds starting with 'sql'."""
+        """All SQL configs should have unique kinds."""
         configs = [
             ListTablesConfig(),
             GetSchemaConfig(),
@@ -162,8 +174,16 @@ class TestPerToolConfigs:
         kinds = {c.kind for c in configs}
         # Each config has unique kind
         assert len(kinds) == 6
-        # All start with "sql"
-        assert all(k.startswith("sql") for k in kinds)
+        # Kinds are derived from tool_name (last part after the dot)
+        expected_kinds = {
+            "list_tables",
+            "get_schema",
+            "describe_table",
+            "query",
+            "explain_query",
+            "sample_query",
+        }
+        assert kinds == expected_kinds
 
     def test_tool_property_loads_function(self) -> None:
         """Tool property should import and return the tool function."""
@@ -180,11 +200,14 @@ class TestPerToolConfigs:
         config = QueryConfig()
         assert config.tool_requires == "fastapi_context"
 
-    def test_base_config_tool_raises_without_tool_name(self) -> None:
-        """Base config tool property should raise without tool_name."""
-        config = SQLToolConfigBase()
-        with pytest.raises(AttributeError, match="tool_name"):
-            _ = config.tool
+    def test_base_config_requires_tool_name(self) -> None:
+        """Base config requires tool_name (inherited from ToolConfig).
+
+        SQLToolConfigBase inherits from soliplex.config.ToolConfig which
+        requires tool_name as a positional argument.
+        """
+        with pytest.raises(TypeError, match="tool_name"):
+            SQLToolConfigBase()
 
     def test_configs_inherit_settings(self) -> None:
         """Per-tool configs should inherit base settings."""

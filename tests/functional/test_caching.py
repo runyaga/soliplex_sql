@@ -19,16 +19,17 @@ class TestAdapterCaching:
     def test_same_config_returns_cached_adapter(self) -> None:
         """Same config should return the same cached adapter."""
         config = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///test1.db",
             read_only=True,
             max_rows=100,
         )
 
         ctx1 = MagicMock()
-        ctx1.deps.tool_configs = {"sql": config}
+        ctx1.deps.tool_configs = {"query": config}
 
         ctx2 = MagicMock()
-        ctx2.deps.tool_configs = {"sql": config}
+        ctx2.deps.tool_configs = {"query": config}
 
         adapter1 = _get_adapter(ctx1)
         adapter2 = _get_adapter(ctx2)
@@ -38,21 +39,23 @@ class TestAdapterCaching:
     def test_different_database_url_creates_new_adapter(self) -> None:
         """Different database URL should create new adapter."""
         config1 = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///db1.db",
             read_only=True,
             max_rows=100,
         )
         config2 = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///db2.db",
             read_only=True,
             max_rows=100,
         )
 
         ctx1 = MagicMock()
-        ctx1.deps.tool_configs = {"sql": config1}
+        ctx1.deps.tool_configs = {"query": config1}
 
         ctx2 = MagicMock()
-        ctx2.deps.tool_configs = {"sql": config2}
+        ctx2.deps.tool_configs = {"query": config2}
 
         adapter1 = _get_adapter(ctx1)
         adapter2 = _get_adapter(ctx2)
@@ -63,21 +66,23 @@ class TestAdapterCaching:
     def test_different_read_only_creates_new_adapter(self) -> None:
         """Different read_only setting should create new adapter."""
         config1 = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///same.db",
             read_only=True,
             max_rows=100,
         )
         config2 = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///same.db",
             read_only=False,
             max_rows=100,
         )
 
         ctx1 = MagicMock()
-        ctx1.deps.tool_configs = {"sql": config1}
+        ctx1.deps.tool_configs = {"query": config1}
 
         ctx2 = MagicMock()
-        ctx2.deps.tool_configs = {"sql": config2}
+        ctx2.deps.tool_configs = {"query": config2}
 
         adapter1 = _get_adapter(ctx1)
         adapter2 = _get_adapter(ctx2)
@@ -87,21 +92,23 @@ class TestAdapterCaching:
     def test_different_max_rows_creates_new_adapter(self) -> None:
         """Different max_rows should create new adapter."""
         config1 = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///same.db",
             read_only=True,
             max_rows=100,
         )
         config2 = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///same.db",
             read_only=True,
             max_rows=500,
         )
 
         ctx1 = MagicMock()
-        ctx1.deps.tool_configs = {"sql": config1}
+        ctx1.deps.tool_configs = {"query": config1}
 
         ctx2 = MagicMock()
-        ctx2.deps.tool_configs = {"sql": config2}
+        ctx2.deps.tool_configs = {"query": config2}
 
         adapter1 = _get_adapter(ctx1)
         adapter2 = _get_adapter(ctx2)
@@ -111,13 +118,14 @@ class TestAdapterCaching:
     def test_cache_key_uses_tuple_not_hash(self) -> None:
         """Cache should use tuple as key, not hash."""
         config = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///test.db",
             read_only=True,
             max_rows=100,
         )
 
         ctx = MagicMock()
-        ctx.deps.tool_configs = {"sql": config}
+        ctx.deps.tool_configs = {"query": config}
 
         _get_adapter(ctx)
 
@@ -155,6 +163,7 @@ class TestConcurrentRoomSupport:
         """Should support multiple concurrent databases for rooms."""
         # Room A: Sales database
         sales_config = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///sales.db",
             read_only=True,
             max_rows=100,
@@ -162,6 +171,7 @@ class TestConcurrentRoomSupport:
 
         # Room B: HR database
         hr_config = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///hr.db",
             read_only=True,
             max_rows=100,
@@ -169,19 +179,20 @@ class TestConcurrentRoomSupport:
 
         # Room C: Finance database
         finance_config = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///finance.db",
             read_only=True,
             max_rows=100,
         )
 
         ctx_sales = MagicMock()
-        ctx_sales.deps.tool_configs = {"sql": sales_config}
+        ctx_sales.deps.tool_configs = {"query": sales_config}
 
         ctx_hr = MagicMock()
-        ctx_hr.deps.tool_configs = {"sql": hr_config}
+        ctx_hr.deps.tool_configs = {"query": hr_config}
 
         ctx_finance = MagicMock()
-        ctx_finance.deps.tool_configs = {"sql": finance_config}
+        ctx_finance.deps.tool_configs = {"query": finance_config}
 
         # Get adapters for each room
         adapter_sales = _get_adapter(ctx_sales)

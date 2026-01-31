@@ -43,9 +43,9 @@ def _get_config_from_context(ctx: Any) -> SQLToolConfigBase | None:
 
     tool_configs = deps.tool_configs
 
-    # Look for any SQL tool config (kinds start with "sql")
+    # Look for any SQL tool config (instance of SQLToolConfigBase)
     for config in tool_configs.values():
-        if hasattr(config, "kind") and config.kind.startswith("sql"):
+        if isinstance(config, SQLToolConfigBase):
             return config
 
     return None
@@ -70,6 +70,7 @@ def _get_adapter(ctx: Any) -> SoliplexSQLAdapter:
         # Fall back to environment-based configuration
         settings = SQLToolSettings()
         tool_config = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.fallback",
             database_url=settings.database_url,
             read_only=settings.read_only,
             max_rows=settings.max_rows,

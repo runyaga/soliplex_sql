@@ -1,10 +1,12 @@
-# Example Soliplex Installation Configuration
+# Soliplex SQL Example Installation
 #
-# This shows how to register soliplex_sql tool configs in your installation.
-# Copy the relevant sections to your actual installation.yaml.
+# This demonstrates soliplex_sql tool integration.
+# Run with: soliplex-cli serve example/installation.yaml
+
+id: "soliplex-sql-example"
 
 meta:
-  # Register ALL SQL tool config classes (Soliplex requires 1:1 mapping)
+  # Register SQL tool config classes
   tool_configs:
     - soliplex_sql.config.ListTablesConfig
     - soliplex_sql.config.GetSchemaConfig
@@ -13,6 +15,30 @@ meta:
     - soliplex_sql.config.ExplainQueryConfig
     - soliplex_sql.config.SampleQueryConfig
 
-# Rooms that use SQL tools
-rooms:
-  - rooms/sql-assistant/room_config.yaml
+secrets:
+  - secret_name: "URL_SAFE_TOKEN_SECRET"
+    sources:
+      - kind: "random_chars"
+
+environment:
+  - "OLLAMA_BASE_URL"
+  - name: "INSTALLATION_PATH"
+    value: "file:."
+
+# Disable OIDC authentication for demo
+oidc_paths:
+  -
+
+# Rooms are loaded from ./rooms by default
+room_paths:
+  - "./rooms"
+
+# Thread persistence (in-memory for demo)
+thread_persistence_dburi:
+  sync: "sqlite://"
+  async: "sqlite+aiosqlite://"
+
+# Room authorization (in-memory for demo)
+room_authz_dburi:
+  sync: "sqlite://"
+  async: "sqlite+aiosqlite://"

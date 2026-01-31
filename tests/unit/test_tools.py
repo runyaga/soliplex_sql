@@ -34,10 +34,13 @@ class TestGetConfigFromContext:
         assert _get_config_from_context(ctx) is None
 
     def test_returns_config_with_sql_kind(self) -> None:
-        """Should return config with kind='sql'."""
-        config = SQLToolConfigBase()
+        """Should return config matching SQL kind."""
+        from soliplex_sql.config import ListTablesConfig
+
+        config = ListTablesConfig()  # Has default tool_name
         ctx = MagicMock()
-        ctx.deps.tool_configs = {"sql": config}
+        # Use the kind derived from tool_name ('list_tables')
+        ctx.deps.tool_configs = {"list_tables": config}
 
         result = _get_config_from_context(ctx)
 
@@ -98,21 +101,23 @@ class TestGetAdapter:
     def test_different_configs_different_adapters(self) -> None:
         """Should create different adapters for different configs."""
         config1 = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///db1.db",
             read_only=True,
             max_rows=100,
         )
         config2 = SQLToolConfigBase(
+            tool_name="soliplex_sql.tools.query",
             database_url="sqlite:///db2.db",
             read_only=True,
             max_rows=100,
         )
 
         ctx1 = MagicMock()
-        ctx1.deps.tool_configs = {"sql": config1}
+        ctx1.deps.tool_configs = {"query": config1}
 
         ctx2 = MagicMock()
-        ctx2.deps.tool_configs = {"sql": config2}
+        ctx2.deps.tool_configs = {"query": config2}
 
         with patch.object(SQLToolConfigBase, "create_deps") as mock_create:
             mock_deps = MagicMock()
