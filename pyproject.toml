@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "soliplex-sql"
-version = "0.1.0dev0"
+version = "0.2.0"
 description = "Soliplex adapter for sql-toolset-pydantic-ai"
 authors = [{ name = "runyaga", email = "runyaga@gmail.com" }]
 readme = "README.md"
