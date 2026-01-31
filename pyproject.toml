@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-soliplex = ["soliplex"]
+soliplex = ["soliplex @ git+https://github.com/soliplex/soliplex.git@main"]
 postgres = ["asyncpg >= 0.29.0"]
 dev = [
     "pytest >= 8.0.0",
@@ -33,7 +33,7 @@ dev = [
     "pytest-asyncio >= 0.23.0",
     "coverage >= 7.0.0",
     "ruff >= 0.4.0",
-    "soliplex",
+    "soliplex @ git+https://github.com/soliplex/soliplex.git@main",
 ]
 
 [tool.setuptools.packages.find]
