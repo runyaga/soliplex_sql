@@ -24,7 +24,7 @@ This document outlines the phased implementation plan for `soliplex_sql`, an ada
 - [x] Verify ≥80% code coverage
 - [x] Initial commit (`308126e`)
 - [x] **LLM Review & Fixes** (see `FEEDBACK_SQLTOOLS.md`)
-- [ ] Final Phase 1 commit
+- [x] Final Phase 1 commit (`701834e`)
 
 ### Phase 1 Fix Tasks (from LLM Review)
 - [x] **S1**: Enforce read_only in `adapter.py` query methods
