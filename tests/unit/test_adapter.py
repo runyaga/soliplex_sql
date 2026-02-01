@@ -262,6 +262,81 @@ class TestStatementSplitting:
         result = _split_statements(sql)
         assert result == ["SELECT 1", "SELECT 2"]
 
+    def test_dollar_quoted_string_basic(self) -> None:
+        """PostgreSQL $$ dollar-quoting should not split on semicolons."""
+        sql = """CREATE FUNCTION hello() RETURNS text AS $$
+BEGIN
+    RETURN 'Hello, World!';
+END;
+$$ LANGUAGE plpgsql"""
+        result = _split_statements(sql)
+        assert len(result) == 1
+        assert "RETURN 'Hello, World!';" in result[0]
+        assert "$$ LANGUAGE plpgsql" in result[0]
+
+    def test_dollar_quoted_string_with_tag(self) -> None:
+        """PostgreSQL $tag$ dollar-quoting should work."""
+        sql = """CREATE FUNCTION test() RETURNS text AS $func$
+BEGIN
+    RETURN 'test;value';
+END;
+$func$ LANGUAGE plpgsql"""
+        result = _split_statements(sql)
+        assert len(result) == 1
+        assert "$func$" in result[0]
+
+    def test_dollar_quoted_multiple_statements(self) -> None:
+        """Multiple statements with dollar-quoting should split correctly."""
+        sql = """CREATE FUNCTION f1() RETURNS text AS $$
+BEGIN RETURN 'a;b'; END;
+$$ LANGUAGE plpgsql;
+SELECT f1()"""
+        result = _split_statements(sql)
+        assert len(result) == 2
+        assert "CREATE FUNCTION" in result[0]
+        assert "SELECT f1()" in result[1]
+
+    def test_single_line_comment(self) -> None:
+        """Semicolon in single-line comment should not split."""
+        sql = "SELECT * FROM users -- this; is a comment\nWHERE id = 1"
+        result = _split_statements(sql)
+        assert len(result) == 1
+        assert "WHERE id = 1" in result[0]
+
+    def test_single_line_comment_at_end(self) -> None:
+        """Single-line comment at statement end."""
+        sql = "SELECT 1; -- comment with semicolon;"
+        result = _split_statements(sql)
+        assert len(result) == 2
+        assert result[0] == "SELECT 1"
+        assert "comment with semicolon" in result[1]
+
+    def test_multi_line_comment(self) -> None:
+        """Semicolon in multi-line comment should not split."""
+        sql = "SELECT /* a; comment */ 1 FROM dual"
+        result = _split_statements(sql)
+        assert len(result) == 1
+        assert "/* a; comment */" in result[0]
+
+    def test_multi_line_comment_spanning_lines(self) -> None:
+        """Multi-line comment spanning multiple lines."""
+        sql = """SELECT *
+/* This is a
+multi-line comment;
+with semicolons; */
+FROM users"""
+        result = _split_statements(sql)
+        assert len(result) == 1
+        assert "FROM users" in result[0]
+
+    def test_comment_and_string_together(self) -> None:
+        """Comments and strings together."""
+        sql = "SELECT 'a;b' -- comment; here\n; SELECT 2"
+        result = _split_statements(sql)
+        assert len(result) == 2
+        assert "'a;b'" in result[0]
+        assert "SELECT 2" in result[1]
+
 
 class TestWriteQueryDetection:
     """Tests for _is_write_query method."""
