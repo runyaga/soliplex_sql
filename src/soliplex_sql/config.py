@@ -39,6 +39,30 @@ class SQLToolSettings(BaseSettings):
     query_timeout: float = 30.0
 
 
+def _parse_postgres_url(url: str) -> dict[str, str]:
+    """Parse PostgreSQL URL into components.
+
+    Supports formats:
+        postgresql://user:password@host:port/database
+        postgresql+asyncpg://user:password@host:port/database
+
+    Args:
+        url: PostgreSQL connection URL
+
+    Returns:
+        Dict with user, password, host, db keys
+    """
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    return {
+        "user": parsed.username or "postgres",
+        "password": parsed.password or "",
+        "host": f"{parsed.hostname or 'localhost'}:{parsed.port or 5432}",
+        "db": parsed.path.lstrip("/") or "postgres",
+    }
+
+
 def _create_backend(
     database_url: str,
     read_only: bool = True,
@@ -62,7 +86,14 @@ def _create_backend(
         path = database_url.replace("sqlite:///", "")
         return SQLiteDatabase(path, read_only=read_only)
     elif database_url.startswith("postgresql"):
-        return PostgreSQLDatabase(database_url, read_only=read_only)
+        params = _parse_postgres_url(database_url)
+        return PostgreSQLDatabase(
+            user=params["user"],
+            password=params["password"],
+            host=params["host"],
+            db=params["db"],
+            read_only=read_only,
+        )
     else:
         msg = f"Unsupported database URL: {database_url}. "
         msg += "Supported: sqlite:///, postgresql://"
