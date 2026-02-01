@@ -7,10 +7,13 @@ overhead and gives full control over query execution.
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 from typing import Any
 
 from soliplex_sql.exceptions import QueryExecutionError
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from sql_toolset_pydantic_ai import SQLDatabaseDeps
@@ -84,6 +87,7 @@ _READONLY_PREFIXES = (
 )
 
 # Write operations that require commit
+# MERGE and CALL are for PostgreSQL (not supported in SQLite)
 _WRITE_PREFIXES = (
     "INSERT",
     "UPDATE",
@@ -93,6 +97,8 @@ _WRITE_PREFIXES = (
     "ALTER",
     "REPLACE",
     "TRUNCATE",
+    "MERGE",  # PostgreSQL 15+
+    "CALL",  # PostgreSQL 11+ (stored procedures)
 )
 
 
@@ -258,6 +264,10 @@ class SoliplexSQLAdapter:
         connection = getattr(database, "_connection", None)
 
         if connection is None:
+            logger.warning(
+                "Could not access _connection to commit. "
+                "Write may not persist if upstream library changed."
+            )
             return
 
         # aiosqlite connection has commit()

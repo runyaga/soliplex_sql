@@ -287,6 +287,11 @@ class TestWriteQueryDetection:
             "ALTER TABLE users ADD COLUMN age INT",
             "REPLACE INTO users (id, name) VALUES (1, 'test')",
             "TRUNCATE TABLE users",
+            # PostgreSQL-specific (not supported in SQLite)
+            "MERGE INTO target USING source ON condition",
+            "merge into target using source on condition",
+            "CALL my_procedure()",
+            "call my_procedure()",
         ],
     )
     def test_detects_write_queries(
