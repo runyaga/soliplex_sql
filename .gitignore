@@ -53,3 +53,6 @@ Thumbs.db
 
 # Local databases (generated or user-added)
 example/*.db
+
+# PostgreSQL room configs (local testing only)
+example/rooms/postgres-*

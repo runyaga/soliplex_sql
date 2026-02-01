@@ -22,9 +22,17 @@ if TYPE_CHECKING:
 def _split_statements(sql: str) -> list[str]:
     """Split SQL into individual statements.
 
-    Handles semicolons inside string literals by using a simple state machine.
-    This allows multi-statement queries like "INSERT...; INSERT...;" to work
-    with SQLite which only allows one statement per execute().
+    Handles semicolons inside string literals, dollar-quoted strings, and
+    comments using a simple state machine. This allows multi-statement queries
+    like "INSERT...; INSERT...;" to work with SQLite which only allows one
+    statement per execute().
+
+    Supports:
+    - Single-quoted strings: 'text'
+    - Double-quoted strings: "text"
+    - PostgreSQL dollar-quoted strings: $$text$$ or $tag$text$tag$
+    - Single-line comments: -- comment
+    - Multi-line comments: /* comment */
 
     Args:
         sql: SQL string potentially containing multiple statements
@@ -36,13 +44,75 @@ def _split_statements(sql: str) -> list[str]:
     current = []
     in_string = False
     string_char = None
+    dollar_tag = None  # For PostgreSQL $$ or $tag$ quoting
+    in_line_comment = False
+    in_block_comment = False
     i = 0
 
     while i < len(sql):
         char = sql[i]
 
-        # Handle string literals
-        if char in ("'", '"') and not in_string:
+        # Handle single-line comment (-- to end of line)
+        if in_line_comment:
+            current.append(char)
+            if char == "\n":
+                in_line_comment = False
+            i += 1
+            continue
+
+        # Handle multi-line comment (/* ... */)
+        if in_block_comment:
+            current.append(char)
+            if char == "*" and i + 1 < len(sql) and sql[i + 1] == "/":
+                current.append("/")
+                in_block_comment = False
+                i += 1
+            i += 1
+            continue
+
+        # Check for comment starts (only outside strings)
+        if not in_string and dollar_tag is None:
+            # Single-line comment
+            if char == "-" and i + 1 < len(sql) and sql[i + 1] == "-":
+                in_line_comment = True
+                current.append(char)
+                i += 1
+                continue
+            # Multi-line comment
+            if char == "/" and i + 1 < len(sql) and sql[i + 1] == "*":
+                in_block_comment = True
+                current.append(char)
+                current.append("*")
+                i += 2
+                continue
+
+        # Check for PostgreSQL dollar-quoting start/end
+        if char == "$" and not in_string:
+            # Look for dollar-quote tag: $$ or $tag$
+            j = i + 1
+            while j < len(sql) and (sql[j].isalnum() or sql[j] == "_"):
+                j += 1
+            if j < len(sql) and sql[j] == "$":
+                tag = sql[i : j + 1]  # e.g., "$$" or "$tag$"
+                if dollar_tag is None:
+                    # Start of dollar-quoted string
+                    dollar_tag = tag
+                    current.append(tag)
+                    i = j
+                elif dollar_tag == tag:
+                    # End of dollar-quoted string
+                    current.append(tag)
+                    dollar_tag = None
+                    i = j
+                else:
+                    current.append(char)
+            else:
+                current.append(char)
+        elif dollar_tag is not None:
+            # Inside dollar-quoted string, just collect characters
+            current.append(char)
+        # Handle regular string literals
+        elif char in ("'", '"') and not in_string:
             in_string = True
             string_char = char
             current.append(char)

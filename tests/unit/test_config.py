@@ -7,6 +7,7 @@ import pytest
 from soliplex_sql.config import SQLToolConfig
 from soliplex_sql.config import SQLToolSettings
 from soliplex_sql.config import _create_backend
+from soliplex_sql.config import _parse_postgres_url
 from soliplex_sql.exceptions import UnsupportedDatabaseError
 
 
@@ -55,6 +56,40 @@ class TestCreateBackend:
 
         assert "sqlite" in str(exc_info.value)
         assert "postgresql" in str(exc_info.value)
+
+
+class TestParsePostgresURL:
+    """Tests for PostgreSQL URL parsing."""
+
+    def test_full_url_with_asyncpg(self) -> None:
+        """Should parse postgresql+asyncpg URL."""
+        url = "postgresql+asyncpg://myuser:mypass@dbhost:5433/mydb"
+        result = _parse_postgres_url(url)
+
+        assert result["user"] == "myuser"
+        assert result["password"] == "mypass"
+        assert result["host"] == "dbhost:5433"
+        assert result["db"] == "mydb"
+
+    def test_url_without_asyncpg(self) -> None:
+        """Should parse plain postgresql URL."""
+        url = "postgresql://user:pass@localhost:5432/testdb"
+        result = _parse_postgres_url(url)
+
+        assert result["user"] == "user"
+        assert result["password"] == "pass"
+        assert result["host"] == "localhost:5432"
+        assert result["db"] == "testdb"
+
+    def test_defaults_for_missing_parts(self) -> None:
+        """Should use defaults for missing URL parts."""
+        url = "postgresql://localhost/mydb"
+        result = _parse_postgres_url(url)
+
+        assert result["user"] == "postgres"
+        assert result["password"] == ""
+        assert result["host"] == "localhost:5432"
+        assert result["db"] == "mydb"
 
 
 class TestSQLToolConfig:
